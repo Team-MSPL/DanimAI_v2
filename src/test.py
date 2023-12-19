@@ -1,9 +1,9 @@
 import numpy as np
 
-from src.requestHandler import request_handler
+from src.request_handler import request_handler
 
 
-def preProcess():
+def test():
     regionList = [
         "서울 동남권", "서울 서북권"
     ]  # x
@@ -89,7 +89,7 @@ def preProcess():
             0,
             0
         ]
-    ],  # 성향 리스트, 선택했으면 1, 안했으면 0
+    ]  # 성향 리스트, 선택했으면 1, 안했으면 0
     essentialPlaceList = [
         {
             "day": 1,
@@ -109,17 +109,17 @@ def preProcess():
             "takenTime": 60,
             "id": 1
         },
-    ],  # 필수 방문 리스트
+    ]  # 필수 방문 리스트
     timeLimitArray = [
         8,
         20
-    ],  # 최대 시간
-    nDay = 4,  # 며칠 여행인지
-    transit = 1,  # 0: 자차, 1: 대중교통
-    distanceSensitivity = 4,  # 거리민감도
+    ]  # 최대 시간
+    nDay = 4  # 며칠 여행인지
+    transit = 1  # 0: 자차, 1: 대중교통
+    distanceSensitivity = 4  # 거리민감도
     bandwidth = True  # 바쁜일정, 여유있는
 
     request_handler(regionList, accomodationList, selectList, essentialPlaceList, timeLimitArray, nDay, transit, distanceSensitivity, bandwidth)
 
 
-preProcess()
+test()
