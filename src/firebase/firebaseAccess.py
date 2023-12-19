@@ -2,6 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 import os
+import numpy as np
 
 from google.cloud.firestore_v1 import FieldFilter
 
@@ -22,12 +23,13 @@ def read_all_place(region, bandwidth):
 
     db = firestore.client()  # 파이어스토어 접근
 
-    all_place = []
+    all_place_map = {}
+    place_feature = []
     try:
         for r in region:
             # "관광지 목록" 문서는 제외
             place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
-            for place in place_snapshot:
+            for idx, place in enumerate(place_snapshot):
                 # data.append(place.to_dict())
                 data = place.to_dict()
                 place = {
@@ -44,8 +46,20 @@ def read_all_place(region, bandwidth):
                     "category": 0,
                     "photo": data["photo"]
                 }
-                all_place.append(place)
+                feature = np.array([[
+                    data["partner"] + [0, 0],
+                    data["concept"] + [0, 0, 0],
+                    data["play"],
+                    data["tour"] + [0],
+                    data["season"] + [0, 0, 0, 0, 0]
+                ]], dtype=int)
+                all_place_map[idx] = place
+                # print(feature.shape)
+                if len(place_feature) == 0:
+                    place_feature = feature
+                else:
+                    place_feature = np.append(place_feature, feature, axis=0)
     except Exception as error:
         print("관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:", error)
 
-    return all_place
+    return all_place_map, place_feature

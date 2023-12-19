@@ -1,7 +1,5 @@
 import numpy as np
-import constant
-import parameter
-import placeListBuilder
+import place_list_builder
 
 def routerSearch(accomodationList, themeList, essentialPlaceList, timeLimit, nDay):
 
