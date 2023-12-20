@@ -12,6 +12,8 @@ def get_place_score_list(place_list, theme_list, selected_theme_num_list, activa
 
     score_list = []
     preference_list = place_list * theme_list
+    index = np.arange(0, len(preference_list), 1, dtype=int)
+    index= index.reshape(len(preference_list), 1)
     for w in weight:
         score = preference_list * w
         score = np.sum(score, axis=2)
@@ -19,8 +21,9 @@ def get_place_score_list(place_list, theme_list, selected_theme_num_list, activa
         score = np.nan_to_num(score)
         score = np.sum(score, axis=1)
         score /= activated_theme_num
+        score = np.array(score, dtype=object)
+        score = np.reshape(score, (len(preference_list),1))
+        score = np.append(score, index, axis=1)
         score_list.append(score)
-
-    score_list = np.array(score_list)
-
+    # score_list = np.array(score_list)
     return score_list, distanceBias
