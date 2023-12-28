@@ -1,13 +1,13 @@
 import numpy as np
 import copy
 import pprint
-from src.ai.distance import tsp
+from src.ai.hill_climb import hill_climb
 from src.common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
 from src.ai.place_score import get_place_score_list
 
 pp = pprint.PrettyPrinter()
 
-def route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_list, n_day, distance_sensitvity, transit):
+def route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_list, n_day, distance_sensitivity, transit):
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
 
@@ -16,7 +16,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
 
     for t in range(RESULT_NUM):
-        params = {"n_day": n_day, "distance_sensitvity": distance_sensitvity, "transit": transit,
+        params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit,
                   "distance_bias": distance_bias[t]}
         route_search_repeat(place_list, place_score_list[t], accomodation_list, essential_place_list, time_limit_list, params)
 
@@ -46,10 +46,12 @@ def route_search_for_one_day(accomodation, place_list, place_score_list, essenti
     time_coast = 0
     score_sum = 0
     place_idx_list = []
-    if accomodation == '':
-        path.append(accomodation)
+    # if accomodation == '':
+    #     path.append(accomodation)
+    popper = len(place_score_list) - 1
     while time_limit > time_coast and len(place_score_list) > 0 and len(path) < 5:
-        place_idx = place_score_list.pop()
+        place_idx = place_score_list[popper]
+        popper -= 1
         place = place_list[place_idx[1]]
         if time_coast + place["taken_time"] <= time_limit:
             path.append(place)
@@ -57,13 +59,14 @@ def route_search_for_one_day(accomodation, place_list, place_score_list, essenti
             place_idx_list.append(place_idx)
             time_coast += place["taken_time"]
 
-    moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
-    moving_time = (len(path) - 1) * moving_transit
-    while moving_time + time_coast > time_limit and len(path) > 1:
-        place = path.pop()
-        score_sum -= place_idx_list.pop()[0]
-        time_coast -= place["taken_time"]
-        moving_transit -= moving_transit
+    # moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
+    # moving_time = (len(path) - 1) * moving_transit
+    # while moving_time + time_coast > time_limit and len(path) > 1:
+    #     place = path.pop()
+    #     idx = place_idx_list.pop()
+    #     score_sum -= idx[0]
+    #     time_coast -= place["taken_time"]
+    #     moving_transit -= moving_transit
 
-    path, distance = tsp(path)
+    path, idx_list = hill_climb(place_list, place_score_list, place_idx_list, path, params)
     pp.pprint(path)

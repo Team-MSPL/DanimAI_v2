@@ -1,6 +1,6 @@
 from typing import Final
 
-RESULT_NUM : Final = 1
+RESULT_NUM : Final = 2
 
 WEIGHT : Final = []
 DISTANCE_BIAS : Final = []
@@ -14,3 +14,6 @@ CAR_COEFF :Final = 5
 
 CAR_TRANSIT = 30
 PUBLIC_TRANSIT = 60
+
+HILL_LIMIT = 2000
+HILL_SWITCH_LIMIT = 5
