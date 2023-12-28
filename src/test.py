@@ -43,7 +43,7 @@ def test():
             "takenTime": 30,
             "category": 4
         }
-    ],  # 숙소 리스트. 숙소 미리 정해져있는 경우
+    ]  # 숙소 리스트. 숙소 미리 정해져있는 경우
     selectList = [
         [
             0,
