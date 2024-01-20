@@ -1,6 +1,6 @@
 from typing import Final
 
-RESULT_NUM : Final = 2
+RESULT_NUM : Final = 4
 
 WEIGHT : Final = []
 DISTANCE_BIAS : Final = []

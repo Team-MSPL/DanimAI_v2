@@ -1,4 +1,4 @@
-from src.common.constant import Dummy
+from .common.constant import Dummy
 
 
 def preprocess(place_list, ex_essential_list, ex_accomodation_list):
@@ -46,19 +46,19 @@ def accomodation_list_adaptor(external_place_list):
     adapted_list = []
     for item in external_place_list:
         adapted_list.append({
-            "name": item["name"],
-            "latitude": item["lat"],
-            "longitude": item["lng"],
-            "takenTime": item["takenTime"],
+            "name": item.name,
+            "latitude": item.lat,
+            "longitude": item.lng,
+            "takenTime": item.takenTime,
             "popular": 0,
             "partner": Dummy.PARTNER,
             "concept": Dummy.CONCEPT,
             "play": Dummy.PLAY,
             "tour": Dummy.TOUR,
             "season": Dummy.SEASON,
-            "category": item["category"],
+            "category": item.category,
             "photo": "",
             "is_essential": True,
-            "is_dummy": True if item["name"]=="" else False
+            "is_dummy": True if item.name == "" else False
         })
     return adapted_list

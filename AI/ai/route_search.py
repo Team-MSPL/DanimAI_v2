@@ -1,9 +1,9 @@
 import numpy as np
 import copy
 import pprint
-from src.ai.hill_climb import hill_climb
-from src.common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
-from src.ai.place_score import get_place_score_list
+from .hill_climb import hill_climb
+from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
+from .place_score import get_place_score_list
 
 pp = pprint.PrettyPrinter()
 
@@ -15,32 +15,31 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum)
     #이때까지는 list의 인덱스가 list 에서 id
 
-
+    path = []
     for t in range(RESULT_NUM):
         params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit,
                   "distance_bias": distance_bias[t]}
-        route_search_repeat(place_list, place_score_list[t], accomodation_list, essential_place_list, time_limit_list, params)
-
-    # print(place_list)
+        result = route_search_repeat(place_list, place_score_list[t], accomodation_list, essential_place_list, time_limit_list, params)
+        path.append(result)
+    return path
 
 def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params):
-    # print(place_score_list)
     n_day = params["n_day"]
 
     place_score_list_copy = copy.deepcopy(place_score_list)
     #TODO 복사하여 반복하기 전에 정렬 한 번만 하고 복사해도 될듯?
     place_score_list_copy = sorted(place_score_list_copy, key=lambda x: x[0])
-    path_day = []
 
+    path_day = []
     for i in range(n_day):
         time_limit = 840
         if i == 0:
             time_limit -= 60 * time_limit_list[0]
         elif i == n_day - 1:
             time_limit = 60 * time_limit_list[1]
-        print("day: ", i + 1)
-        route_search_for_one_day(accomodation_list[i], place_list, place_score_list_copy, essential_place_list, time_limit, params)
-
+        result = route_search_for_one_day(accomodation_list[i], place_list, place_score_list_copy, essential_place_list, time_limit, params)
+        path_day.append(result)
+    return path_day
 
 def route_search_for_one_day(accomodation, place_list, place_score_list, essential_place_list, time_limit, params):
     transit = params["transit"]
@@ -77,4 +76,4 @@ def route_search_for_one_day(accomodation, place_list, place_score_list, essenti
         time_coast -= place["taken_time"]
         moving_transit -= moving_transit
 
-    pp.pprint(path)
+    return path

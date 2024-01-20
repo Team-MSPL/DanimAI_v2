@@ -1,5 +1,5 @@
 import numpy as np
-from src.common.constant import WEIGHT, RESULT_NUM
+from ..common.constant import WEIGHT, RESULT_NUM
 def get_place_score_list(place_list, theme_list, selected_theme_num_list, activated_theme_num):
     weight = np.array(WEIGHT)
 

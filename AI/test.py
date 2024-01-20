@@ -1,6 +1,4 @@
-import numpy as np
-
-from src.request_handler import request_handler
+from AI.AI_service import request_handler
 
 
 def test():
@@ -122,4 +120,4 @@ def test():
     request_handler(regionList, accomodationList, selectList, essentialPlaceList, timeLimitArray, nDay, transit, distanceSensitivity, bandwidth)
 
 
-test()
+# test()

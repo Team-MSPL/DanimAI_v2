@@ -1,7 +1,6 @@
-from src.ai.distance import tsp
+from .distance import tsp
 import random
-import copy
-import src.common.constant as constant
+from ..common import constant
 
 def get_distance_score(distance, params):
     sensitivity, transit, distance_bias = params['distance_sensitivity'], params['transit'], params['distance_bias']
