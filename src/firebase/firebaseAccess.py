@@ -45,7 +45,9 @@ def read_all_place(region, bandwidth):
                     "tour": data["tour"],
                     "season": data["season"],
                     "category": 0,
-                    "photo": data["photo"]
+                    "photo": data["photo"],
+                    "is_essential": False,
+                    "is_dummy": False
                 }
                 feature = np.array([[
                     data["partner"] + [0, 0],

@@ -17,3 +17,10 @@ PUBLIC_TRANSIT = 60
 
 HILL_LIMIT = 2000
 HILL_SWITCH_LIMIT = 5
+
+class Dummy:
+    PARTNER = [0, 0, 0, 0, 0, 0, 0]
+    PLAY = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    CONCEPT = [0, 0, 0, 0, 0, 0]
+    TOUR = [0, 0, 0, 0, 0, 0, 0, 0]
+    SEASON = [0, 0, 0, 0]

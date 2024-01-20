@@ -26,6 +26,12 @@ def hill_climb(place_list, place_score_list, idx_list, path, params):
         execute_time += 1
         switch_time += 1
         target_idx = random.randint(0, len(idx_list) - 1)
+        limit = 0
+        while place_list[target_idx]["is_essential"] and limit < 10:
+            target_idx = random.randint(0, len(idx_list) - 1)
+            limit += 1
+        if place_list[target_idx]["is_essential"]:
+            continue
         switch_idx = random.randint(0, len(place_list) - 1)
         while visited[switch_idx]:
             switch_idx = random.randint(0, len(place_list) - 1)
