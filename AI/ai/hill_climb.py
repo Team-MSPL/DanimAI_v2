@@ -21,7 +21,7 @@ def hill_climb(place_list, place_score_list, idx_list, path, params):
     cur_score = score - distance_score
     execute_time = 0
     switch_time = 0
-    while execute_time < constant.HILL_LIMIT and switch_time < constant.HILL_LIMIT:
+    while execute_time < constant.HILL_LIMIT and switch_time < constant.HILL_SWITCH_LIMIT:
         execute_time += 1
         switch_time += 1
         target_idx = random.randint(0, len(idx_list) - 1)
