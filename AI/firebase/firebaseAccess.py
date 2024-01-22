@@ -33,6 +33,8 @@ def read_all_place(region, bandwidth):
             for _, place in enumerate(place_snapshot):
                 # data.append(place.to_dict())
                 data = place.to_dict()
+                if bandwidth:
+                    data["takenTime"] += 30
                 place = {
                     "name": data["name"],
                     "latitude": data["latitude"],
