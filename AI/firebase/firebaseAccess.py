@@ -26,10 +26,11 @@ def read_all_place(region, bandwidth):
     all_place_map = {}
     place_feature = []
     try:
+        idx = 0
         for r in region:
             # "관광지 목록" 문서는 제외
             place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
-            for idx, place in enumerate(place_snapshot):
+            for _, place in enumerate(place_snapshot):
                 # data.append(place.to_dict())
                 data = place.to_dict()
                 place = {
@@ -44,7 +45,9 @@ def read_all_place(region, bandwidth):
                     "tour": data["tour"],
                     "season": data["season"],
                     "category": 0,
-                    "photo": data["photo"]
+                    "photo": data["photo"],
+                    "is_essential": False,
+                    "is_dummy": False
                 }
                 feature = np.array([[
                     data["partner"] + [0, 0],
@@ -54,6 +57,7 @@ def read_all_place(region, bandwidth):
                     data["season"] + [0, 0, 0, 0, 0]
                 ]], dtype=int)
                 all_place_map[idx] = place
+                idx += 1
                 # print(feature.shape)
                 if len(place_feature) == 0:
                     place_feature = feature
