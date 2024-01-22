@@ -120,4 +120,4 @@ def test():
     request_handler(regionList, accomodationList, selectList, essentialPlaceList, timeLimitArray, nDay, transit, distanceSensitivity, bandwidth)
 
 
-# test()
+test()

@@ -55,7 +55,7 @@ def route_search_for_one_day(accomodation, place_list, place_score_list, essenti
             path.append(essential)
             time_coast += essential["taken_time"]
     popper = len(place_score_list) - 1
-    while time_limit > time_coast and len(place_score_list) > 0 and len(path) < 5:
+    while time_limit > time_coast and len(place_score_list) > 0 and len(path) < 5 and popper >= 0:
         place_idx = place_score_list[popper]
         popper -= 1
         place = place_list[place_idx[1]]
@@ -69,11 +69,13 @@ def route_search_for_one_day(accomodation, place_list, place_score_list, essenti
 
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
     moving_time = (len(path) - 1) * moving_transit
-    while moving_time + time_coast > time_limit and len(path) > 1:
-        place = path.pop()
-        idx = place_idx_list.pop()
-        score_sum -= idx[0]
-        time_coast -= place["taken_time"]
-        moving_transit -= moving_transit
+    popper = len(path)
+    while moving_time + time_coast > time_limit and len(path) > 1 and popper > 0:
+        popper -= 1
+        if not path[popper]["is_essential"]:
+            place = path.pop(popper)
+            idx = place_idx_list.pop()
+            score_sum -= idx[0]
+            time_coast -= place["taken_time"]
 
     return path
