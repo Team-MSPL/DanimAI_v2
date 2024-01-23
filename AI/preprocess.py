@@ -24,19 +24,19 @@ def essential_place_list_adaptor(external_place_list):
     adapted_list = []
     for item in external_place_list:
         adapted_list.append({
-            "name": item["name"],
-            "latitude": item["lat"],
-            "longitude": item["lng"],
-            "taken_time": item["takenTime"],
+            "name": item.name,
+            "latitude": item.lat,
+            "longitude": item.lng,
+            "taken_time": item.takenTime,
             "popular": 0,
             "partner": Dummy.PARTNER,
             "concept": Dummy.CONCEPT,
             "play": Dummy.PLAY,
             "tour": Dummy.TOUR,
             "season": Dummy.SEASON,
-            "category": item["category"],
+            "category": item.category,
             "photo": "",
-            "day": item["day"],
+            "day": item.day,
             "is_essential": True,
             "is_dummy": False
         })

@@ -7,7 +7,7 @@ import numpy as np
 from google.cloud.firestore_v1 import FieldFilter
 
 
-def read_all_place(region, bandwidth):
+def read_all_place(region, select_list, bandwidth):
     load_dotenv()  # .env 파일의 환경 변수 로드
     firebase_config = {
         "apiKey": os.getenv("GOOGLE_API_KEY"),
@@ -34,9 +34,20 @@ def read_all_place(region, bandwidth):
                 # data.append(place.to_dict())
                 data = place.to_dict()
 
-                #여유로운 여행이면 takenTime 30분 추가
+                
+                #반려견과 선택시 placeList에서 먼저 제거 - 240123
+                if select_list[0][6] == 1 and data["partner"][6] == 0:
+                    continue
+
+                #여유로운 여행이면 takenTime 30분 추가 - 240122
                 if bandwidth:
                     data["takenTime"] += 30
+
+                # 실내여행지 예외처리 - 관광지 점수가 40점 이하면 걍 -10000으로 바꿔서 잘 안뜨게 함
+                data["tour"][5] = -10000 if data["tour"][5] <= 40 else data["tour"][5]
+    
+                # 계절도 예외처리 - 여긴 더 심하게 낮은 점수로
+                data["season"][:] = [-100000 if x <= 40 else x for x in data["season"]]
 
                 place = {
                     "name": data["name"],
