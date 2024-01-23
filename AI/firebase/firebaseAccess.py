@@ -69,16 +69,8 @@ def read_all_place(region, bandwidth):
                 if len(place_feature) == 0:
                     place_feature = feature
                 else:
-                    place_feature = np.append(place_feature, feature, axis=0)
+                    place_feature = np.append(place_feature, feature, axis=0)    # Deep Copy가 된다는 사실 확인하였음
     except Exception as error:
         print("관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:", error)
-
-    print("len(all_place_map)")
-    print(len(all_place_map))
-    feature = np.array([[
-        data["partner"] + [0, 0],
-    ]], dtype=int)
-    place_feature = np.append(place_feature, feature, axis=0)
-    print(len(place_feature))
 
     return all_place_map, place_feature
