@@ -19,6 +19,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     for t in range(RESULT_NUM):
         params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit,
                   "distance_bias": distance_bias[t]}
+        place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
         result = route_search_repeat(place_list, place_score_list[t], accomodation_list, essential_place_list, time_limit_list, params, bandwidth)
         path.append(result)
     return path
@@ -26,9 +27,8 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params, bandwidth):
     n_day = params["n_day"]
 
+
     place_score_list_copy = copy.deepcopy(place_score_list)
-    #TODO 복사하여 반복하기 전에 정렬 한 번만 하고 복사해도 될듯?
-    place_score_list_copy = sorted(place_score_list_copy, key=lambda x: x[0])
 
     path_day = []
     for i in range(n_day):
@@ -87,7 +87,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     # 240123 - 하루 일정 마친 후의 숙소를 추가 -> TODO 힐클라임에도 고려하여 수정해야함
     if not accomodation2["is_dummy"]:
         path.append(accomodation2)
-        time_coast += accomodation2["taken_time"]
+        time_coast += accomodation2["taken_time"]  #숙소인데 왜 소요시간이 있냐. 이동시간이면 몰라도
 
     path, idx_list = hill_climb(place_list, place_score_list, place_idx_list, path, params)
 

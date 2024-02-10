@@ -1,10 +1,11 @@
 from .ai.route_search import route_search_main
-from .firebase.firebaseAccess import read_all_place
+from .firebase.firebaseAccess import FirebaseAccess
 from .preprocess import preprocess
 import numpy as np
 
 def request_handler(region_list, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
-    place_list, place_feature_matrix = read_all_place(region_list, select_list, bandwidth)
+    fb = FirebaseAccess()
+    place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
     # for place in place_list:
     #     print(place)
     # for feature in place_feature_matrix:
