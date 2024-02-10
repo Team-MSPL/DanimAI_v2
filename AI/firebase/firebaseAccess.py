@@ -7,7 +7,7 @@ import numpy as np
 from google.cloud.firestore_v1 import FieldFilter
 
 
-def read_all_place(region, bandwidth):
+def read_all_place(region, select_list, bandwidth):
     load_dotenv()  # .env 파일의 환경 변수 로드
     firebase_config = {
         "apiKey": os.getenv("GOOGLE_API_KEY"),
@@ -18,7 +18,7 @@ def read_all_place(region, bandwidth):
         "appId": "1:70367155908:web:39c1344d65ecce16141b91",
         "measurementId": "G-VXZTLNFY84",
     }
-    cred = credentials.Certificate("/Users/mihnhyuk/PycharmProjects/DanimAI_v2/private_key/danim-3439e-firebase-adminsdk-9ud51-36d28c31ba.json")  # Firebase Admin SDK 인증 정보
+    cred = credentials.Certificate("/Users/tulee3474/Desktop/DanimAI_v2/private_key/danim-3439e-firebase-adminsdk-9ud51-36d28c31ba.json")  # Firebase Admin SDK 인증 정보
     firebase_admin.initialize_app(cred, firebase_config)
 
     db = firestore.client()  # 파이어스토어 접근
@@ -33,8 +33,22 @@ def read_all_place(region, bandwidth):
             for _, place in enumerate(place_snapshot):
                 # data.append(place.to_dict())
                 data = place.to_dict()
+
+                
+                #반려견과 선택시 placeList에서 먼저 제거 - 240123
+                if select_list[0][6] == 1 and data["partner"][6] == 0:
+                    continue
+
+                #여유로운 여행이면 takenTime 30분 추가 - 240122
                 if bandwidth:
                     data["takenTime"] += 30
+
+                # 실내여행지 예외처리 - 관광지 점수가 40점 이하면 걍 -10000으로 바꿔서 잘 안뜨게 함
+                data["tour"][5] = -10000 if data["tour"][5] <= 40 else data["tour"][5]
+    
+                # 계절도 예외처리 - 여긴 더 심하게 낮은 점수로
+                data["season"][:] = [-100000 if x <= 40 else x for x in data["season"]]
+
                 place = {
                     "name": data["name"],
                     "latitude": data["latitude"],
@@ -48,9 +62,11 @@ def read_all_place(region, bandwidth):
                     "season": data["season"],
                     "category": 0,
                     "photo": data["photo"],
+                    "regionIndex": r, #240122 - 관광지 정보 읽어오기 위해 이게 어느 지역 관광지인지 저장하기 위함
                     "is_essential": False,
                     "is_dummy": False
                 }
+            
                 feature = np.array([[
                     data["partner"] + [0, 0],
                     data["concept"] + [0, 0, 0],
@@ -64,7 +80,7 @@ def read_all_place(region, bandwidth):
                 if len(place_feature) == 0:
                     place_feature = feature
                 else:
-                    place_feature = np.append(place_feature, feature, axis=0)
+                    place_feature = np.append(place_feature, feature, axis=0)    # Deep Copy가 된다는 사실 확인하였음
     except Exception as error:
         print("관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:", error)
 

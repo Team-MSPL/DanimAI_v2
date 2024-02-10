@@ -14,11 +14,12 @@ def get_place_score_list(place_list, theme_list, selected_theme_num_list, activa
     preference_list = place_list * theme_list
     index = np.arange(0, len(preference_list), 1, dtype=int)
     index= index.reshape(len(preference_list), 1)
+
     for w in weight:
         score = preference_list * w
         score = np.sum(score, axis=2)
         score = score / selected_theme_num_list
-        score = np.nan_to_num(score)
+        score = np.nan_to_num(score)    # nan -> 0 변환
         score = np.sum(score, axis=1)
         score /= activated_theme_num
         score = np.array(score, dtype=object)
