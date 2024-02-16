@@ -18,7 +18,7 @@ def read_all_place(region, select_list, bandwidth):
         "appId": "1:70367155908:web:39c1344d65ecce16141b91",
         "measurementId": "G-VXZTLNFY84",
     }
-    cred = credentials.Certificate("/Users/tulee3474/Desktop/DanimAI_v2/private_key/danim-3439e-firebase-adminsdk-9ud51-36d28c31ba.json")  # Firebase Admin SDK 인증 정보
+    cred = credentials.Certificate("/home/ubuntu/DanimAI_v2/private_key/danim-3439e-firebase-adminsdk-9ud51-36d28c31ba.json")  # Firebase Admin SDK 인증 정보
     firebase_admin.initialize_app(cred, firebase_config)
 
     db = firestore.client()  # 파이어스토어 접근
