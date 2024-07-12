@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import FastAPI
 from pydantic import BaseModel
-
+import time
 from AI.AI_service import request_handler
 
 
@@ -12,7 +12,6 @@ class AccomodationListItem(BaseModel):
     takenTime: int
     category: int
 
-
 class EssentialPlaceListItem(BaseModel):
     day: int
     name: str
@@ -21,7 +20,6 @@ class EssentialPlaceListItem(BaseModel):
     category: int
     takenTime: int
     id: int
-
 
 class AIModel(BaseModel):
     regionList: List[str]
@@ -39,6 +37,7 @@ app = FastAPI()
 
 @app.post("/ai/run")
 async def ai_run(aiModel : AIModel):
+    start = time.time()
     region_list = aiModel.regionList
     accomodation_list = aiModel.accomodationList
     select_list = aiModel.selectList
@@ -49,6 +48,14 @@ async def ai_run(aiModel : AIModel):
     distance_sensitivity = aiModel.distanceSensitivity
     bandwitdth = aiModel.bandwidth
 
-    path = request_handler(region_list, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day,
+    resultData, bestPointList = request_handler(region_list, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day,
                            transit, distance_sensitivity, bandwitdth)
-    return path
+    end = time.time()
+    print(end - start)
+    return {"status" : "Success",
+            "data" :{
+                "resultData" : resultData,
+                "enouthPlace": True
+            },
+        "bestPointList" : bestPointList
+    }

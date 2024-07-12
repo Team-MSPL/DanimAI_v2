@@ -22,7 +22,13 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
         result = route_search_repeat(place_list, place_score_list[t], accomodation_list, essential_place_list, time_limit_list, params, bandwidth)
         path.append(result)
-    return path
+
+    result = []
+    while path:
+        a = path.pop()
+        if a not in path:
+            result.append(a)
+    return result
 
 def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params, bandwidth):
     n_day = params["n_day"]
