@@ -9,6 +9,20 @@ from google.cloud.firestore_v1 import FieldFilter
 class FirebaseAccess():
     _instance = None
 
+def read_all_place(region, select_list, bandwidth):
+    load_dotenv()  # .env 파일의 환경 변수 로드
+    firebase_config = {
+        "apiKey": os.getenv("GOOGLE_API_KEY"),
+        "authDomain": "danim-3439e.firebaseapp.com",
+        "projectId": "danim-3439e",
+        "storageBucket": "danim-3439e.appspot.com",
+        "messagingSenderId": "70367155908",
+        "appId": "1:70367155908:web:39c1344d65ecce16141b91",
+        "measurementId": "G-VXZTLNFY84",
+    }
+    cred = credentials.Certificate("/home/ubuntu/DanimAI_v2/private_key/danim-3439e-firebase-adminsdk-9ud51-36d28c31ba.json")  # Firebase Admin SDK 인증 정보
+    firebase_admin.initialize_app(cred, firebase_config)
+    
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(FirebaseAccess, cls).__new__(cls, *args, **kwargs)
