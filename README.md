@@ -8,4 +8,4 @@
 8. 완료되면  교통 수단에 따라 이동시간으로 시간제한 넘어가면 path에서 pop
 
 
-python -m uvicorn AI.controller:app
+gunicorn -w 2 -k uvicorn.workers.UvicornWorker AI.controller:app
