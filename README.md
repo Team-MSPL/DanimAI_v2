@@ -5,7 +5,8 @@
 5. route_search_for_one_day: Path에 먼저 필수여행지, 숙소 넣고, 장소 리스트 선호도 높은 장소부터 시간 제한 체크하며 넣음. -> 힐클라임
 6. tsp로 경로 최적화해서 전체 거리 구함
 7. 힐클라임 하면서 최적화. 랜덤으로 선택해서 바꾸는데 필수여행지 선택되면 다시 랜덤으로 선출-> 반복횟수 제한 걸어둠.
-8. 완료되면  교통 수단에 따라 이동시간으로 시간제한 넘어가면 path에서 pop
+8. 완료되면 교통 수단에 따라 이동시간으로 시간제한 넘어가면 path에서 pop
 
-
+ec2상에서 실행하는 방법
+//univcon은 싱글프로세스이기에, 보통 배포할 때는 gunicorn 사용 / nginx -> 연결 문제
 gunicorn -w 2 -k uvicorn.workers.UvicornWorker AI.controller:app
