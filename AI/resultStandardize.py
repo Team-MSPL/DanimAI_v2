@@ -9,7 +9,7 @@ def tendencyCalculate(path, themeList):
     ]
     tendencyData = [
             ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
-            ['힐링', '액티비티', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
+            ['힐링', '활동적인', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
             ['레저 스포츠', '문화시설', '사진 명소', '이색체험', '유적지', '박물관', '공원', '사찰', '성지'],
             ['바다', '산', '드라이브', '산책', '쇼핑', '실내여행지', '시티투어', '전통한옥'],
             ['봄', '여름', '가을', '겨울'],
@@ -64,6 +64,7 @@ def standardize(pathsThemeList):
 
     return pathsThemeList
 
+# TODO 장민혁 피셜 - 랭킹이 좀 안맞게 나온다 - 일단 당장은 안쓰니까 냅둠
 def getRanking(pathThemeList):
     for i in range(len(pathThemeList[0]['tendencyPointList'])):
         rankList = sorted(pathThemeList, key=lambda x: x['tendencyPointList'][i])
