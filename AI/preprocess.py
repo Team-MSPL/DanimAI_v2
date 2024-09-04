@@ -8,7 +8,7 @@ def preprocess(place_list, ex_essential_list, ex_accomodation_list):
     return place_list, essential_list, accomodation_list
 
 def compare(place1, place2): # 다른 장소면  return true - 240122 위도, 경도 중 하나는 같을 수 있으니 or 연산으로 변경
-    return abs(place1["latitude"] - place2["latitude"]) >= 0.002 or abs(place1["longitude"] - place2["longitude"]) >= 0.002
+    return abs(place1["lat"] - place2["lat"]) >= 0.002 or abs(place1["lng"] - place2["lng"]) >= 0.002
 def remove_duplicates(place_list, ex_list):
     new_place_list = []
     for idx, place in place_list.items():
@@ -25,10 +25,10 @@ def essential_place_list_adaptor(external_place_list):
     for item in external_place_list:
         adapted_list.append({
             "name": item.name,
-            "latitude": item.lat,
-            "longitude": item.lng,
-            "taken_time": item.takenTime,
+            "lat": item.lat,
+            "lng": item.lng,
             "popular": 0,
+            "takenTime": item.takenTime,
             "partner": Dummy.PARTNER,
             "concept": Dummy.CONCEPT,
             "play": Dummy.PLAY,
@@ -47,10 +47,10 @@ def accomodation_list_adaptor(external_place_list):
     for item in external_place_list:
         adapted_list.append({
             "name": item.name,
-            "latitude": item.lat,
-            "longitude": item.lng,
-            "takenTime": item.takenTime,
+            "lat": item.lat,
+            "lng": item.lng,
             "popular": 0,
+            "takenTime": item.takenTime,
             "partner": Dummy.PARTNER,
             "concept": Dummy.CONCEPT,
             "play": Dummy.PLAY,

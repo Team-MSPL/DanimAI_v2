@@ -11,6 +11,8 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
 
+    print("selectedThemeNum_list")
+    print(selectedThemeNum_list)
 
     place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum)
     #이때까지는 list의 인덱스가 list 에서 id
@@ -73,27 +75,27 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     place_idx_list = []
     if not accomodation1["is_dummy"]:
         path.append(accomodation1)
-        time_coast += accomodation1["taken_time"]
+        time_coast += accomodation1["takenTime"]
     for essential in essential_place_list:
         if not essential["is_dummy"]:
             path.append(essential)
-            time_coast += essential["taken_time"]
+            time_coast += essential["takenTime"]
     popper = len(place_score_list) - 1
     while time_limit > time_coast and len(place_score_list) > 0 and len(path) < 5 and popper >= 0:
         place_idx = place_score_list[popper]
         popper -= 1
         place = place_list[place_idx[1]]
 
-        if time_coast + place["taken_time"] <= time_limit:
+        if time_coast + place["takenTime"] <= time_limit:
             path.append(place)
             score_sum += place_idx[0]
             place_idx_list.append(place_idx)
-            time_coast += place["taken_time"]
+            time_coast += place["takenTime"]
 
     # 240123 - 하루 일정 마친 후의 숙소를 추가 -> TODO 힐클라임에도 고려하여 수정해야함
     if not accomodation2["is_dummy"]:
         path.append(accomodation2)
-        time_coast += accomodation2["taken_time"]  #숙소인데 왜 소요시간이 있냐. 이동시간이면 몰라도
+        time_coast += accomodation2["takenTime"]  #숙소인데 왜 소요시간이 있냐. 이동시간이면 몰라도
 
     path, idx_list = hill_climb(place_list, place_score_list, place_idx_list, path, params)
 
@@ -107,6 +109,6 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
             place = path.pop(popper)
             idx = place_idx_list.pop()
             score_sum -= idx[0]
-            time_coast -= place["taken_time"]
+            time_coast -= place["takenTime"]
 
     return path

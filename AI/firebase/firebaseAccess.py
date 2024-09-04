@@ -39,7 +39,7 @@ class FirebaseAccess():
         place_feature = []
         try:
             idx = 0
-            for r in region:
+            for r_index, r in enumerate(region):
                 # "관광지 목록" 문서는 제외
                 place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
                 for _, place in enumerate(place_snapshot):
@@ -63,10 +63,10 @@ class FirebaseAccess():
 
                     place = {
                         "name": data["name"],
-                        "latitude": data["latitude"],
-                        "longitude": data["longitude"],
+                        "lat": data["latitude"],
+                        "lng": data["longitude"],
+                        "takenTime": data["takenTime"],
                         "popular" : data["popular"],
-                        "taken_time": data["takenTime"],
                         "partner": data["partner"],
                         "concept": data["concept"],
                         "play": data["play"],
@@ -74,7 +74,7 @@ class FirebaseAccess():
                         "season": data["season"],
                         "category": 0,
                         "photo": data["photo"],
-                        "regionIndex": r, #240122 - 관광지 정보 읽어오기 위해 이게 어느 지역 관광지인지 저장하기 위함
+                        "regionIndex": r_index,
                         "is_essential": False,
                         "is_dummy": False
                     }
