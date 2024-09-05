@@ -62,7 +62,11 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
 
     place_score_list_copy = copy.deepcopy(place_score_list)
-
+    
+    # 갔던 장소를 또 가지 않게 하기 위함
+    place_list_not_in_path = copy.deepcopy(place_list)
+    place_score_list_not_in_path = copy.deepcopy(place_score_list)
+    
     path_day = []
     
     # 날짜별 반복
@@ -90,21 +94,22 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
         #각 날짜별 시간 계산하는 부분 종료
 
-        result, enough_place = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1],place_list, place_score_list_copy, essential_place_list, time_limit, params)
+        result, enough_place = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_list_not_in_path, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params)
         path_day.append(result)
         
         
     return path_day, enough_place
 
-def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, essential_place_list, time_limit, params):
+def route_search_for_one_day(accomodation1, accomodation2, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params):
     transit = params["transit"]
-    
-    # 갔던 장소를 또 가지 않게 하기 위함
-    place_list_not_in_path = copy.deepcopy(place_list)
-    place_score_list_not_in_path = copy.deepcopy(place_score_list)
         
     # 코스 초안을 만드는 그리디 알고리즘 부분
     path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params)
+    
+    print(params["repeat_count"], " 번째 그리디 결과")
+    for place in path:
+        print(place["name"])
+                
     
     # 240123 - 하루 일정 마친 후의 숙소를 추가 -> TODO 힐클라임에도 고려하여 수정해야함
     if not accomodation2["is_dummy"]:

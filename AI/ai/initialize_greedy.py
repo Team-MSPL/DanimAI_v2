@@ -22,12 +22,12 @@ def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_s
     # 그리디 부분에서는 거리 계산을 안하는거로 함 ( 변동 가능 ) TODO 거리 계산까지 넣어보고 결과 비교
     
     # repeat_count만큼 더 내려가서 반복마다 차이를 줌 
-    popper = len(place_score_list) - 1 - params["repeat_count"]
+    popper = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
     
     # 그리디 반복 부분 - place_score_list_not_in_path 사용
     while time_limit > time_coast and len(path) < 5 and popper >= 0:
         
-                
+        
         # 관광지가 부족할 경우 (1)
         if len(place_score_list_not_in_path) < 0:        
             print("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list))
