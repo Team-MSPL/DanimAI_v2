@@ -10,9 +10,6 @@ from .place_score import get_place_score_list
 # 관광지 갯수 충분한지 - 한 번이라도 부족하면 False로 전환
 enough_place = True
 
-# 현재 반복이 몇 번째인지 ( 최대값은 RESULT_NUM - 1 )
-repeat_count = -1
-
 pp = pprint.PrettyPrinter()
 
 def route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_list, n_day, distance_sensitivity, transit, bandwidth):
@@ -28,29 +25,32 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
     for t in range(RESULT_NUM):
         
-        # 현재가 몇 번째 반복인지 광역 변수로 저장
+        # 현재가 몇 번째 반복인지 반복문 안으로 넣어 줌
         repeat_count = t
-        params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit, "distance_bias": distance_bias[t], "move_time": 60 if distance_sensitivity < 6 else 30}
-        #place_score_list 미리 정렬하기
+        
+        params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit, "distance_bias": distance_bias[t], "repeat_count":repeat_count, "bandwidth":bandwidth, "move_time": 60 if distance_sensitivity < 6 else 30}
+        # place_score_list 미리 정렬하기
         place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
         
         # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
         # deepcopy를 이용하여 각 반복별로 이미 경로에 들어간 관광지를 따로따로 제거
-        result = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params, bandwidth)
+        result = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
+
         path_list.append(result)
 
-    result = []
-    seen = set()
 
-    # 코스 중복 제거 - 기존 방식은 path의 중복 요소가 중간에 있다면 놓칠 수 있어 set 방식으로 변경
-    for path in path_list:
-        if path not in seen:
-            result.append(path)
-            seen.add(path)
+    # 코스 중복 제거
+    result = []
+    
+    while path_list:
+        a = path_list.pop()  # 리스트에서 하나의 경로를 꺼냄
+        # 다른 경로와 중복되지 않으면 결과에 추가
+        if all(not np.array_equal(a, b) for b in path_list):  # path에 남아 있는 모든 경로와 비교
+            result.append(a)
 
     return result, enough_place
 
-def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params, bandwidth):
+def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params):
     n_day = params["n_day"]
 
 
@@ -78,7 +78,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
             time_limit = time_limit * 60
         
         # 여유로운 여행이면, 60분 줄이기
-        if bandwidth:
+        if params["bandwidth"]:
             time_limit -= 60
 
         #각 날짜별 시간 계산하는 부분 종료
@@ -137,15 +137,22 @@ def initialize_greedy(accomodation1, place_list, place_score_list, essential_pla
             # 이동시간 추가
             time_coast += params["move_time"]
     
-    popper = len(place_score_list) - 1
-
+    #repeat_count만큼 더 내려가서 반복마다 차이를 줌 
+    popper = len(place_score_list) - 1 - params["repeat_count"]
+    
     # 그리디 부분 - place_score_list
     while time_limit > time_coast and len(place_score_list) > 0 and len(path) < 5 and popper >= 0:
+        
+        
+        # 관광지가 부족할 경우 (1)
+        # print(params["repeat_count"])
+        # print(popper)
+        # print(time_limit)
+        # print(time_coast)
+        
+        
         place_idx = place_score_list[popper]
         popper -= 1
-
-        #repeat_count만큼 더 내려가서 반복마다 차이를 줌 
-        popper -= repeat_count
         
         place = place_list[place_idx[1]]
 
@@ -157,7 +164,6 @@ def initialize_greedy(accomodation1, place_list, place_score_list, essential_pla
             # 이동시간 추가
             time_coast += params["move_time"]
         
-        #관광지가 부족할 경우 (1)
-        
+    
         
     return path, time_coast, score_sum, place_idx_list

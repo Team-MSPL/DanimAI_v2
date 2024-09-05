@@ -1,7 +1,7 @@
 from typing import Final
 
 # 코스 최대 갯수
-RESULT_NUM : Final = 7
+RESULT_NUM : Final = 4
 
 WEIGHT : Final = []
 DISTANCE_BIAS : Final = []
