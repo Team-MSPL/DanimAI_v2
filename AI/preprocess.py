@@ -22,43 +22,62 @@ def remove_duplicates(place_list, ex_list):
 
 def essential_place_list_adaptor(external_place_list):
     adapted_list = []
+
+    default_values = {
+        "popular": 0,
+        "partner": Dummy.PARTNER,
+        "concept": Dummy.CONCEPT,
+        "play": Dummy.PLAY,
+        "tour": Dummy.TOUR,
+        "season": Dummy.SEASON,
+        "photo": "",
+        "is_essential": True,
+        "is_dummy": False
+    }
+
     for item in external_place_list:
-        adapted_list.append({
-            "name": item.name,
-            "lat": item.lat,
-            "lng": item.lng,
-            "popular": 0,
-            "takenTime": item.takenTime,
-            "partner": Dummy.PARTNER,
-            "concept": Dummy.CONCEPT,
-            "play": Dummy.PLAY,
-            "tour": Dummy.TOUR,
-            "season": Dummy.SEASON,
-            "category": item.category,
-            "photo": "",
-            "day": item.day,
-            "is_essential": True,
-            "is_dummy": False
-        })
+        # 객체의 모든 속성을 딕셔너리로 변환
+        item_dict = item.__dict__
+
+        # 두 딕셔너리 병합 (item_dict가 default_values의 값을 덮어씀) - 필수여행지 객체값을 그대로 복사해서 돌려주게 ( regionIndex 및 이후 추가될 가능성이 있는 요소들 )
+        merged_dict = {**default_values, **item_dict}
+
+
+        # id 키가 있으면 제거
+        merged_dict.pop("id", None)  # 'None'은 'id'가 없을 경우 KeyError를 방지
+
+        adapted_list.append(merged_dict)
+
     return adapted_list
 
 def accomodation_list_adaptor(external_place_list):
     adapted_list = []
+
+    default_values = {
+        "popular": 0,
+        "partner": Dummy.PARTNER,
+        "concept": Dummy.CONCEPT,
+        "play": Dummy.PLAY,
+        "tour": Dummy.TOUR,
+        "season": Dummy.SEASON,
+        "photo": "",
+        "is_essential": True
+    }
+
     for item in external_place_list:
-        adapted_list.append({
-            "name": item.name,
-            "lat": item.lat,
-            "lng": item.lng,
-            "popular": 0,
-            "takenTime": item.takenTime,
-            "partner": Dummy.PARTNER,
-            "concept": Dummy.CONCEPT,
-            "play": Dummy.PLAY,
-            "tour": Dummy.TOUR,
-            "season": Dummy.SEASON,
-            "category": item.category,
-            "photo": "",
-            "is_essential": True,
-            "is_dummy": True if item.name == "" else False
-        })
+        # 객체의 모든 속성을 딕셔너리로 변환
+        item_dict = item.__dict__
+
+        # 두 딕셔너리 병합 (item_dict가 default_values의 값을 덮어씀) - 필수여행지 객체값을 그대로 복사해서 돌려주게 ( regionIndex 및 이후 추가될 가능성이 있는 요소들 )
+        merged_dict = {**default_values, **item_dict}
+
+
+        # id 키가 있으면 제거
+        merged_dict.pop("id", None)  # 'None'은 'id'가 없을 경우 KeyError를 방지
+
+        # "is_dummy" 추가 - 숙소 유무에 따라 다르게 해야하기 때문
+        merged_dict["is_dummy"] = True if item.name == "" else False
+
+        adapted_list.append(merged_dict)
+
     return adapted_list

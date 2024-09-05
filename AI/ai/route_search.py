@@ -11,21 +11,24 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
 
-    print("selectedThemeNum_list")
-    print(selectedThemeNum_list)
-
+    # 미리 스코어 계산하여 리스트화 + distance_bias는 원래 코드 123줄 즈음에 있는 ((10 - distanceSensitivityInAI) * 15) * sumForDistance를 계산한 것
     place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum)
     #이때까지는 list의 인덱스가 list 에서 id
 
     path = []
+
+    # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
     for t in range(RESULT_NUM):
         params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit,
                   "distance_bias": distance_bias[t]}
         place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
+        # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
         result = route_search_repeat(place_list, place_score_list[t], accomodation_list, essential_place_list, time_limit_list, params, bandwidth)
         path.append(result)
 
     result = []
+    
+    # 코스 중복 제거
     while path:
         a = path.pop()
         if a not in path:

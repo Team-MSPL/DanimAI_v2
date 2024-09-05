@@ -19,7 +19,9 @@ def get_place_score_list(place_list, theme_list, selected_theme_num_list, activa
         score = preference_list * w
         score = np.sum(score, axis=2)
         score = score / selected_theme_num_list
-        score = np.nan_to_num(score)    # nan -> 0 변환, 윗줄에서 0으로 나눠 문제가 생기더라도 여기서 처리해 줌
+        score = np.nan_to_num(score)    # nan -> 0 변환, 윗줄에서 0으로 나눠 아래 문제가 생기더라도 여기서 처리해 줌
+        # /home/ubuntu/DanimAI_v2/AI/ai/place_score.py:21: RuntimeWarning: invalid value encountered in divide
+        #   score = score / selected_theme_num_list
         score = np.sum(score, axis=1)
         score /= activated_theme_num
         score = np.array(score, dtype=object)

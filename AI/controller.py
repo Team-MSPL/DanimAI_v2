@@ -65,9 +65,7 @@ async def ai_run(aiModel : AIModel):
                 }
         }
     except:
-        return {"status" : "fail",
-                "message": 'Internal server error',
-                "data": None
+        return {"status" : "failed",
+                "message": 'Internal server error'
         }
 
-  #TODO enoughPlace 처리
