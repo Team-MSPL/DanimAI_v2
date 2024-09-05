@@ -52,7 +52,7 @@ async def ai_run(aiModel : AIModel):
         distance_sensitivity = aiModel.distanceSensitivity
         bandwitdth = aiModel.bandwidth
 
-        resultData, bestPointList = request_handler(region_list, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day,
+        resultData, bestPointList, enough_place = request_handler(region_list, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day,
                             transit, distance_sensitivity, bandwitdth)
 
         end = time.time()
@@ -60,7 +60,7 @@ async def ai_run(aiModel : AIModel):
         return {"status" : "success",
                 "data" :{
                     "resultData" : resultData,
-                    "enoughPlace": True,
+                    "enoughPlace": enough_place,
                     "bestPointList" : bestPointList
                 }
         }

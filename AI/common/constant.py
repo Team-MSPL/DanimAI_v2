@@ -1,5 +1,6 @@
 from typing import Final
 
+# 코스 최대 갯수
 RESULT_NUM : Final = 7
 
 WEIGHT : Final = []
@@ -15,6 +16,7 @@ CAR_COEFF :Final = 5
 CAR_TRANSIT = 30
 PUBLIC_TRANSIT = 60
 
+# 반복문 돌리는 횟수 ( 힐클라임 최대 횟수 )
 HILL_LIMIT = 10000
 HILL_SWITCH_LIMIT = 200
 

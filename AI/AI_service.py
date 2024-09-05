@@ -23,7 +23,7 @@ def request_handler(region_list, accomodation_list, select_list, essential_place
     place_list, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list)
     
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
-    result = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth)
+    result, enough_place = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth)
 
     # 전체 동선 최적화 추가하기
 
@@ -32,5 +32,5 @@ def request_handler(region_list, accomodation_list, select_list, essential_place
     pathThemeList = standardize(pathThemeList)
     pathThemeList = getRanking(pathThemeList)
     # print(pathThemeList)
-    return result, pathThemeList
+    return result, pathThemeList, enough_place
 
