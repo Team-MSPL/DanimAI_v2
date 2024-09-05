@@ -7,14 +7,16 @@ from .place_score import get_place_score_list
 
 
 
-# 관광지 갯수 충분한지 - 한 번이라도 부족하면 False로 전환
-enough_place = True
 
 pp = pprint.PrettyPrinter()
 
 def route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_list, n_day, distance_sensitivity, transit, bandwidth):
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
+    
+    
+    # 관광지 갯수 충분한지 - 한 번이라도 부족하면 False로 전환
+    enough_place = True
 
     # 미리 스코어 계산하여 리스트화 + distance_bias는 원래 코드 123줄 즈음에 있는 ((10 - distanceSensitivityInAI) * 15) * sumForDistance를 계산한 것
     place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum)
@@ -28,13 +30,14 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         # 현재가 몇 번째 반복인지 반복문 안으로 넣어 줌
         repeat_count = t
         
-        params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit, "distance_bias": distance_bias[t], "repeat_count":repeat_count, "bandwidth":bandwidth, "move_time": 60 if distance_sensitivity < 6 else 30}
+        params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit, "distance_bias": distance_bias[t], "repeat_count":repeat_count, "bandwidth":bandwidth, "enough_place":enough_place, "move_time": 60 if distance_sensitivity < 6 else 30}
+        
         # place_score_list 미리 정렬하기
         place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
         
         # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
         # deepcopy를 이용하여 각 반복별로 이미 경로에 들어간 관광지를 따로따로 제거
-        result = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
+        result, enough_place = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
 
         path_list.append(result)
 
@@ -47,6 +50,9 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         # 다른 경로와 중복되지 않으면 결과에 추가
         if all(not np.array_equal(a, b) for b in path_list):  # path에 남아 있는 모든 경로와 비교
             result.append(a)
+            
+    
+    print("최종 리턴하는 코스 수 : ", len(result))
 
     return result, enough_place
 
@@ -83,24 +89,28 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
         #각 날짜별 시간 계산하는 부분 종료
 
-        result = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1],place_list, place_score_list_copy, essential_place_list, time_limit, params)
+        result, enough_place = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1],place_list, place_score_list_copy, essential_place_list, time_limit, params)
         path_day.append(result)
         
         
-    return path_day
+    return path_day, enough_place
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, essential_place_list, time_limit, params):
     transit = params["transit"]
     
+    # 갔던 장소를 또 가지 않게 하기 위함
+    place_list_not_in_path = copy.deepcopy(place_list)
+    place_score_list_not_in_path = copy.deepcopy(place_score_list)
+        
     # 코스 초안을 만드는 그리디 알고리즘 부분
-    path, time_coast, score_sum, place_idx_list = initialize_greedy(accomodation1, place_list, place_score_list, essential_place_list, time_limit, params)
-
+    path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params)
+    
     # 240123 - 하루 일정 마친 후의 숙소를 추가 -> TODO 힐클라임에도 고려하여 수정해야함
     if not accomodation2["is_dummy"]:
         path.append(accomodation2)
         time_coast += accomodation2["takenTime"]  #숙소인데 왜 소요시간이 있냐. 이동시간이면 몰라도 TODO 숙소까지 이동하는 시간 추가해야함
 
-    path, idx_list = hill_climb(place_list, place_score_list, place_idx_list, path, params)
+    path, idx_list, enough_place = hill_climb(place_list, place_score_list, place_idx_list, path, params)
 
     # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
@@ -114,16 +124,16 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
             score_sum -= idx[0]
             time_coast -= place["takenTime"]
 
-    return path
+    return path, enough_place
 
 
 
 
-def initialize_greedy(accomodation1, place_list, place_score_list, essential_place_list, time_limit, params):
+def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params):
     path = []
     time_coast = 0
     score_sum = 0
-    place_idx_list = []
+    place_idx_list = []     # 관광지별 점수를 배열에 저장해 둠. 사실상 path의 score_list
     
     if not accomodation1["is_dummy"]:
         path.append(accomodation1)
@@ -136,34 +146,42 @@ def initialize_greedy(accomodation1, place_list, place_score_list, essential_pla
             time_coast += essential["takenTime"]
             # 이동시간 추가
             time_coast += params["move_time"]
+            
+    # 그리디 부분에서는 거리 계산을 안하는거로 함 ( 변동 가능 ) TODO 거리 계산까지 넣어보고 결과 비교
     
-    #repeat_count만큼 더 내려가서 반복마다 차이를 줌 
+    # repeat_count만큼 더 내려가서 반복마다 차이를 줌 
     popper = len(place_score_list) - 1 - params["repeat_count"]
     
-    # 그리디 부분 - place_score_list
-    while time_limit > time_coast and len(place_score_list) > 0 and len(path) < 5 and popper >= 0:
+    # 그리디 반복 부분 - place_score_list_not_in_path 사용
+    while time_limit > time_coast and len(path) < 5 and popper >= 0:
         
-        
+                
         # 관광지가 부족할 경우 (1)
-        # print(params["repeat_count"])
-        # print(popper)
-        # print(time_limit)
-        # print(time_coast)
+        if len(place_score_list_not_in_path) < 0:        
+            print("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list))
+            params["enough_place"] = False
+            break
         
         
-        place_idx = place_score_list[popper]
+        place_idx = place_score_list_not_in_path[popper]
         popper -= 1
         
-        place = place_list[place_idx[1]]
+        # 너무 모자라도 안되니까 30분 여유를 줌 ( 원 코드 204줄 )
+        if place_list_not_in_path[place_idx[1]] is not None:
+            
+            place = place_list_not_in_path[place_idx[1]]
+            
+            if time_coast + place["takenTime"] <= time_limit + 30:
+                path.append(place)
+                score_sum += place_idx[0]
+                place_idx_list.append(place_idx)
+                time_coast += place["takenTime"]
+                # 이동시간 추가
+                time_coast += params["move_time"]
 
-        if time_coast + place["takenTime"] <= time_limit:
-            path.append(place)
-            score_sum += place_idx[0]
-            place_idx_list.append(place_idx)
-            time_coast += place["takenTime"]
-            # 이동시간 추가
-            time_coast += params["move_time"]
-        
+                # place_list의 원소들의 인덱스가 place_score_list로써 저장되어 있음 -> place_list는 건들면 안됨 -> None으로 바꾸는 방법
+                del place_score_list_not_in_path[popper]
+                place_list_not_in_path[place_idx[1]] = None
     
-        
-    return path, time_coast, score_sum, place_idx_list
+    
+    return path, time_coast, score_sum, place_idx_list, params["enough_place"]

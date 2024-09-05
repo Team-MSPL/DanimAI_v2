@@ -51,5 +51,5 @@ def hill_climb(place_list, place_score_list, idx_list, path, params):
             visited[idx_list[target_idx][1]] = False
         else:
             idx_list[target_idx] = prev_idx
-    return path, idx_list
+    return path, idx_list, params["enough_place"]
 

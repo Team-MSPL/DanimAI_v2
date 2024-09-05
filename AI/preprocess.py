@@ -7,8 +7,10 @@ def preprocess(place_list, ex_essential_list, ex_accomodation_list):
     place_list = remove_duplicates(place_list, essential_list + accomodation_list)
     return place_list, essential_list, accomodation_list
 
-def compare(place1, place2): # 다른 장소면  return true - 240122 위도, 경도 중 하나는 같을 수 있으니 or 연산으로 변경
+def compare(place1, place2): # 다른 장소면  return true - 위도, 경도 중 하나는 같을 수 있으니 or 연산으로
     return abs(place1["lat"] - place2["lat"]) >= 0.002 or abs(place1["lng"] - place2["lng"]) >= 0.002
+
+# 사용자가 넣은 숙소 및 필수여행지가 place_list에도 있는 것을 방지함
 def remove_duplicates(place_list, ex_list):
     new_place_list = []
     for idx, place in place_list.items():
