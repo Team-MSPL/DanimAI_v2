@@ -34,6 +34,7 @@ def essential_place_list_adaptor(external_place_list):
         "season": Dummy.SEASON,
         "photo": "",
         "is_essential": True,
+        "is_accomodation" : False,
         "is_dummy": False
     }
 
@@ -63,7 +64,8 @@ def accomodation_list_adaptor(external_place_list):
         "tour": Dummy.TOUR,
         "season": Dummy.SEASON,
         "photo": "",
-        "is_essential": True
+        "is_essential": True,
+        "is_accomodation": True
     }
 
     for item in external_place_list:

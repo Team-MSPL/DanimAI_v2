@@ -20,6 +20,9 @@ PUBLIC_TRANSIT = 60
 HILL_LIMIT = 10000
 HILL_SWITCH_LIMIT = 200
 
+# 좌표간 거리 계산에 사용하는 큰 숫자 - 양 끝 노드 ( 숙소 )를 고정할 때 사용함
+LARGE_NUMBER = 10000
+
 class Dummy:
     PARTNER = [0, 0, 0, 0, 0, 0, 0]
     PLAY = [0, 0, 0, 0, 0, 0, 0, 0, 0]

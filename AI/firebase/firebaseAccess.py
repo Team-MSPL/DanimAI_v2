@@ -76,6 +76,7 @@ class FirebaseAccess():
                         "photo": data["photo"],
                         "regionIndex": r_index,
                         "is_essential": False,
+                        "is_accomodation": False,
                         "is_dummy": False
                     }
 
