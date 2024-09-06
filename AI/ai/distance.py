@@ -2,7 +2,6 @@ import numpy as np
 import math
 from python_tsp.heuristics import solve_tsp_local_search
 
-#tsp 대신 다익스트라?
 def tsp(path):
     l = len(path)
     distance_matrix = [[0 for _ in path] for _ in path]

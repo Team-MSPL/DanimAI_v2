@@ -8,9 +8,17 @@ def get_distance_score(distance, params):
     return distance * (constant.MAX_DISTANCE_SENSITIVITY - sensitivity) * dist_coef * distance_bias
 
 # def get_path_score(path):
-def hill_climb(place_list, place_score_list, idx_list, path, params):
+def hill_climb(place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, idx_list, path, params):
     score = 0
+    
+    # 먼저 한 번 경로 최적화
     path, distance = tsp(path)
+    
+    print(params["repeat_count"], " 번째 tsp 결과")
+    for place in path:
+        print(place["name"])
+    
+    
     visited = [False] * len(place_list)
     for idx in idx_list:
         score += idx[0]

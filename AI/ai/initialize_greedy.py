@@ -1,7 +1,7 @@
 
 
 
-def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params):
+def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     path = []
     time_coast = 0
     score_sum = 0
@@ -13,7 +13,9 @@ def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_s
         # 이동시간 추가
         time_coast += params["move_time"]
     for essential in essential_place_list:
-        if not essential["is_dummy"]:
+        
+        # 필수 여행지의 day값이 현재 그리디 중인 path의 날짜와 같아야만 path에 넣음
+        if not essential["is_dummy"] and essential["day"] == day + 1:
             path.append(essential)
             time_coast += essential["takenTime"]
             # 이동시간 추가
