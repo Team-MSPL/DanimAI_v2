@@ -14,9 +14,9 @@ def hill_climb(place_list, place_list_not_in_path, place_score_list, place_score
     # 먼저 한 번 경로 최적화
     path, distance = tsp(path)
     
-    print(params["repeat_count"], " 번째 tsp 결과")
-    for place in path:
-        print(place["name"])
+    # print(params["repeat_count"], " 번째 tsp 결과")
+    # for place in path:
+    #     print(place["name"])
     
     
     visited = [False] * len(place_list)

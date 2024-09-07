@@ -63,7 +63,7 @@ def tsp_fixed_accomodation(path):
     # 숙소의 위치가 바뀌는 경우 대비
     if path[-1]["is_accomodation"]:
         end_accommodation = path[-1]
-    if path[0]["is_accomodation"]:
+    elif path[0]["is_accomodation"]:
         start_accommodation = path[0]
     
     len_path = len(path)
@@ -87,7 +87,7 @@ def tsp_fixed_accomodation(path):
             distance_matrix[0][i] = distance_matrix[0][i] + LARGE_NUMBER  # start에서 중간 노드까지 거리 + LARGE_NUMBER
             distance_matrix[i][0] = distance_matrix[i][0] + LARGE_NUMBER
         
-    if path[-1]["is_accomodation"]:
+    elif path[-1]["is_accomodation"]:
         for i in range(0, len_path - 1):
             # 끝점에서 중간 지점으로 가는 거리 유지
             distance_matrix[-1][i] = distance_matrix[-1][i] + LARGE_NUMBER  # end에서 중간 노드까지 거리 + LARGE_NUMBER
@@ -98,14 +98,17 @@ def tsp_fixed_accomodation(path):
     permutation, distance = solve_tsp_local_search(distance_matrix)
     
     # 숙소의 위치가  바뀌었을 수도 있음 - 이 경우 permutation을 분해 및 재결합해준다. ( permutation : 원본 path의 index값들을 tsp의 결과로 정렬해놓음. 예) [0, 3, 1, 2] )
-    if start_accommodation is not None and permutation[0] is not 0:
-        new_permutation = permutation[permutation.index(0):] + permutation[:permutation.index(0)]
-        #print("tsp에서 start 숙소의 위치가 바뀜", permutation, new_permutation)
-        permutation = new_permutation
-        
-    if end_accommodation is not None and permutation[-1] is not len_path - 1:        
+    
+    if end_accommodation is not None and permutation[-1] != len_path - 1:
+        #맨 뒤가 아니므로 + 1 해줘도 인덱스 오류가 안생김
         new_permutation = permutation[permutation.index(len_path - 1) + 1:] + permutation[:permutation.index(len_path - 1) + 1]
         #print("tsp에서 end 숙소의 위치가 바뀜", permutation, new_permutation)
+        permutation = new_permutation
+    
+    # 여러번 시도해보았으나, start 숙소는 고정 잘 되는 듯, 아직 테스트 단계라 냅둠
+    elif start_accommodation is not None and permutation[0] != 0:
+        new_permutation = permutation[permutation.index(0):] + permutation[:permutation.index(0)]
+        print("tsp에서 start 숙소의 위치가 바뀜", permutation, new_permutation)
         permutation = new_permutation
         
         
@@ -126,13 +129,9 @@ def tsp_fixed_accomodation(path):
 # 맨 앞 + 맨 뒤에 숙소가 있는 경우 처리
 def tsp_fixed_accomodation_both(path):
     
-    start_accommodation, end_accommodation = None, None
             
     # 숙소의 위치가 바뀌는 경우 대비
-    if path[-1]["is_accomodation"]:
-        end_accommodation = path[-1]
-    if path[0]["is_accomodation"]:
-        start_accommodation = path[0]
+    start_accommodation, end_accommodation = path[0], path[-1]
     
     len_path = len(path)
         
@@ -149,26 +148,26 @@ def tsp_fixed_accomodation_both(path):
     # 숙소가 있으면 그 숙소까지의 distance에 LARGE_NUMBER를 더해주는 방식 ( 맨 앞 or 맨 뒤는 고정하려고)
 
     # 시작점과 끝점이 다른 노드로 가는 거리 반영 + 나머지 노드는 LARGE_NUMBER로 처리 -> 맨 앞과 맨 뒤에 모두 숙소가 있을 경우 서로 간의 거리는 2 * LARGENUMBER + 실제 거리    
-    if path[0]["is_accomodation"]:
-        for i in range(1, len_path):
-            # 시작점에서 중간 지점으로 가는 거리
-            distance_matrix[0][i] = distance_matrix[0][i] + LARGE_NUMBER  # start에서 중간 노드까지 거리 + LARGE_NUMBER
-            distance_matrix[i][0] = distance_matrix[i][0] + LARGE_NUMBER
+
+    for i in range(1, len_path):
+        # 시작점에서 중간 지점으로 가는 거리
+        distance_matrix[0][i] = distance_matrix[0][i] + LARGE_NUMBER  # start에서 중간 노드까지 거리 + LARGE_NUMBER
+        distance_matrix[i][0] = distance_matrix[i][0] + LARGE_NUMBER
+        # 끝점에서 중간 지점으로 가는 거리 유지
+        distance_matrix[-1][i] = distance_matrix[-1][i] + LARGE_NUMBER  # end에서 중간 노드까지 거리 + LARGE_NUMBER
+        distance_matrix[i][-1] = distance_matrix[i][-1] + LARGE_NUMBER
         
-    if path[-1]["is_accomodation"]:
-        for i in range(0, len_path - 1):
-            # 끝점에서 중간 지점으로 가는 거리 유지
-            distance_matrix[-1][i] = distance_matrix[-1][i] + LARGE_NUMBER  # end에서 중간 노드까지 거리 + LARGE_NUMBER
-            distance_matrix[i][-1] = distance_matrix[i][-1] + LARGE_NUMBER
     
     # TSP 실행
     distance_matrix = np.array(distance_matrix)
     permutation, distance = solve_tsp_local_search(distance_matrix)
     
-    # 숙소의 위치가  바뀌었을 수도 있음 - 이 경우 permutation을 분해 및 재결합해준다. ( permutation : 원본 path의 index값들을 tsp의 결과로 정렬해놓음. 예) [0, 3, 1, 2] )        
-    if end_accommodation is not None and permutation[-1] is not len_path - 1:    
-        new_permutation = permutation[permutation.index(len_path - 1) + 1:] + permutation[:permutation.index(len_path - 1) + 1]
-        print("tsp에서 양쪽 숙소의 위치가 바뀜", permutation, new_permutation)
+    # 숙소의 위치가  바뀌었을 수도 있음 - LARGE_NUMBER 때문에 두 숙소는 무조건 붙어 다니므로, 그 가운데를 잘라서 나눔 ( permutation : 원본 path의 index값들을 tsp의 결과로 정렬해놓음. 예) [0, 3, 1, 2] )        
+    if end_accommodation is not None and permutation[-1] != len_path - 1:
+        # 예 : [0, 3, 1, 2] -> [3, 1, 2] + [0] -> 뒤집기 -> [0, 2, 1, 3]
+        new_permutation = permutation[permutation.index(len_path - 1):] + permutation[:permutation.index(len_path - 1)]
+        new_permutation.reverse()
+        #print("tsp에서 양쪽 숙소의 위치가 바뀜", permutation, new_permutation)
         permutation = new_permutation
             
         
