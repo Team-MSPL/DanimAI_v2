@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI
 from fastapi import Response
 from pydantic import BaseModel
@@ -6,12 +6,14 @@ import time
 from AI.AI_service import request_handler
 
 
+# 숙소 및 필수여행지 input값을 추가하고자 할 때 여기 수정
 class AccomodationListItem(BaseModel):
     name: str
     lat: float
     lng: float
     takenTime: int
     category: int
+    regionIndex: Optional[int] = None  # regionIndex는 선택적인 값으로 설정
 
 class EssentialPlaceListItem(BaseModel):
     day: int
@@ -21,6 +23,7 @@ class EssentialPlaceListItem(BaseModel):
     category: int
     takenTime: int
     id: int
+    regionIndex: Optional[int] = None  # regionIndex는 선택적인 값으로 설정
 
 class AIModel(BaseModel):
     regionList: List[str]
