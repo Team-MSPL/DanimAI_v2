@@ -2,6 +2,7 @@ import numpy as np
 import copy
 import pprint
 from .hill_climb import hill_climb
+from .distance import tsp
 from .initialize_greedy import initialize_greedy
 from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
 from .place_score import get_place_score_list
@@ -116,8 +117,16 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_lis
     # print(params["repeat_count"], " 번째 그리디 결과")
     # for place in path:
     #     print(place["name"])
+    
+    # 남은 관광지가 없을 경우 힐클라이밍 건너뛰고 tsp만하고 리턴
+    if len(place_score_list_not_in_path) <= 0:
+        print("관광지가 부족할 경우 (???) / 관광지 갯수 : ", len(place_score_list))
+        params["enough_place"] = False
+        path, distance = tsp(path)
+        return path, params["enough_place"]
+        
 
-    path, idx_list, enough_place = hill_climb(place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, place_idx_list, path, params)
+    path, idx_list, enough_place = hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path, place_idx_list, path, params)
 
     # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
