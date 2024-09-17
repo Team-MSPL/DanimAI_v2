@@ -35,10 +35,9 @@ def hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path,
             switch_time += 1
             limit = 0
             
-            target_idx = random.randint(0, len(path) - 1)
-            # 이전 버전은 그리디에서 만들어진 idx_list를 기준으로 하기에 필수여행지, 숙소를 없애버린다는 문제가 있었음
-            
             # 바꿀 관광지 탐색 - 기존 place_list에서 path로 변경
+            target_idx = random.randint(0, len(path) - 1)
+            
             while path[target_idx]["is_essential"] and limit < 10:
                 target_idx = random.randint(0, len(path) - 1)
                 limit += 1
@@ -72,17 +71,11 @@ def hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path,
                     del new_idx_list[i]  
                     break
                     
-            new_idx_list.append(switch_place_score_idx)
-            new_path.insert(target_idx, switch_place)
-            print("12312312412")
-            print(switch_idx)
-            print(switch_place_score_idx)
-            print(switch_place["name"])     # 여기서 에러! 이게 None이란다
-            print("12312312412")
+            new_idx_list.append(copy.deepcopy(switch_place_score_idx))
+            new_path.insert(target_idx, copy.deepcopy(switch_place))
             
             
-            new_path, new_distance = tsp(new_path)
-            print("oipoipiopio")
+            new_path, new_distance = copy.deepcopy(tsp(new_path))
             new_distance_score = get_distance_score(new_distance, params)
             
             new_score = 0
@@ -92,49 +85,25 @@ def hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path,
             
             new_score -= new_distance_score
             
-    
-            print("place_list_not_in_path.count(None)1111111111111111")
-            print(place_list_not_in_path.count(None))
-            print(len(place_list_not_in_path))
-            print(len(place_score_list_not_in_path))
-            
             if new_score > cur_score:
-                print("힐클라이밍 개선 성공", new_score, cur_score)         
+                # print("힐클라이밍 개선 성공", new_score, cur_score)         
                 
-                
-                print("place_list_not_in_path.count(None)22222222222222222222")
-                print(place_list_not_in_path[place_score_list_not_in_path[switch_idx][1]])
                 
                 # 바뀐 관광지 제거
                 place_list_not_in_path[switch_place_score_idx[1]] = None
                 del place_score_list_not_in_path[switch_idx]
-                
-    
-                print(place_list_not_in_path.count(None))
-                print(len(place_list_not_in_path))
-                print(len(place_score_list_not_in_path))
-
-                print(place_list_not_in_path[place_score_list_not_in_path[switch_idx][1]])
-                print(place_list_not_in_path[target_place_score_idx[1]])
                         
                 # 기존 관광지 추가
-                place_score_list_not_in_path.append(target_place_score_idx)
+                place_score_list_not_in_path.append(copy.deepcopy(target_place_score_idx))
                 place_score_list_not_in_path = sorted(place_score_list_not_in_path, key=lambda x: x[0])
-                place_list_not_in_path[target_place_score_idx[1]] = target_place
+                place_list_not_in_path[target_place_score_idx[1]] = copy.deepcopy(target_place)
                 
                 cur_score = new_score
-                path = new_path
-                idx_list = new_idx_list   
+                path = copy.deepcopy(new_path)
+                idx_list = copy.deepcopy(new_idx_list)  
                 
                 switch_time = 0
             
-    
-                print("place_list_not_in_path.count(None)22222222222222222222")
-                print(place_list_not_in_path.count(None))
-                print(len(place_list_not_in_path))
-                print(len(place_score_list_not_in_path))
-
-                print(place_list_not_in_path[target_place_score_idx[1]])
 
             #디버깅용
             before_climb = new_score > cur_score

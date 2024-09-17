@@ -1,7 +1,7 @@
+import copy
 
 
-
-def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
+def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     path = []
     time_coast = 0
     score_sum = 0
@@ -26,24 +26,26 @@ def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_s
     # repeat_count만큼 더 내려가서 반복마다 차이를 줌 
     popper = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
     
+    if popper < 0:
+        popper = 0
+    
     # 그리디 반복 부분 - place_score_list_not_in_path 사용
     while time_limit > time_coast and len(path) < 5 and popper >= 0:
         
         
         # 관광지가 부족할 경우 (1)
         if len(place_score_list_not_in_path) < 0:        
-            print("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list))
+            print("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list_not_in_path))
             params["enough_place"] = False
             break
         
         
-        place_idx = place_score_list_not_in_path[popper]
-        popper -= 1
+        place_idx = copy.deepcopy(place_score_list_not_in_path[popper])
         
         # 너무 모자라도 안되니까 30분 여유를 줌 ( 원 코드 204줄 )
         if place_list_not_in_path[place_idx[1]] is not None:
             
-            place = place_list_not_in_path[place_idx[1]]
+            place = copy.deepcopy(place_list_not_in_path[place_idx[1]])
             
             if time_coast + place["takenTime"] <= time_limit + 30:
                 path.append(place)
@@ -52,10 +54,18 @@ def initialize_greedy(accomodation1, place_list, place_list_not_in_path, place_s
                 time_coast += place["takenTime"]
                 # 이동시간 추가
                 time_coast += params["move_time"]
+                
+                
 
                 # place_list의 원소들의 인덱스가 place_score_list로써 저장되어 있음 -> place_list는 건들면 안됨 -> None으로 바꾸는 방법
                 del place_score_list_not_in_path[popper]
                 place_list_not_in_path[place_idx[1]] = None
+                
+        
+        
+        
+        
+        popper -= 1
     
     
     return path, time_coast, score_sum, place_idx_list, params["enough_place"]
