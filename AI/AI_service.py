@@ -7,10 +7,13 @@ from AI.resultStandardize import tendencyCalculate, standardize, getRanking
 def request_handler(region_list, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
     fb = FirebaseAccess()
     place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
-    # for place in place_list:
-    #     print(place)
-    # for feature in place_feature_matrix:
-    #     print(feature)
+    
+    # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
+    for select in select_list:
+        for select_item in select:
+            if select_item == 0:
+                select_item = -1
+    
     theme_matrix = np.array([
         select_list[0] + [0, 0],
         select_list[1] + [0, 0, 0],
