@@ -1,4 +1,6 @@
 import copy
+import math
+import random
 
 
 def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
@@ -25,9 +27,12 @@ def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_no
     
     # repeat_count만큼 더 내려가서 반복마다 차이를 줌 
     popper = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
-    
+        
     if popper < 0:
         popper = 0
+        
+    # 랜덤 값을 넣어 줌
+    popper = random.randint(math.floor(popper * 0.5), popper)
     
     # 그리디 반복 부분 - place_score_list_not_in_path 사용
     while time_limit > time_coast and len(path) < 5 and popper >= 0:

@@ -127,7 +127,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_lis
     
     # 남은 관광지가 없을 경우 힐클라이밍 건너뛰고 tsp만하고 리턴
     if len(place_score_list_not_in_path) <= 0:
-        print("관광지가 부족할 경우 (???) / 관광지 갯수 : ", len(place_score_list))
+        print("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
         params["enough_place"] = False
         path, distance = tsp(path)
         return path, params["enough_place"]
