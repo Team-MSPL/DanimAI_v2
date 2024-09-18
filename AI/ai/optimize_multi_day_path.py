@@ -39,6 +39,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
             
     
     final_optimized_path = []
+    segment_index = 0
 
     for num_places in place_num_per_day:
         day_path = []
@@ -56,11 +57,12 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
             # 다음 세그먼트로 넘어가기
             if not segment:
                 segment_index += 1
-                # 세그먼트의 첫 원소는 이전 세그먼트의 마지막 원소와 중복이므로 pop
-                optimized_segment_list[segment_index].pop(0)
                 
                 if segment_index >= len(optimized_segment_list):
                     break
+                
+                # 세그먼트의 첫 원소는 이전 세그먼트의 마지막 원소와 중복이므로 pop
+                optimized_segment_list[segment_index].pop(0)
         
         final_optimized_path.append(day_path)
     

@@ -1,4 +1,3 @@
-from AI.ai import optimize_multi_day_path
 import numpy as np
 import copy
 import pprint
@@ -8,7 +7,8 @@ from .distance import tsp
 from .initialize_greedy import initialize_greedy
 from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
 from .place_score import get_place_score_list
-
+from .optimize_multi_day_path import optimize_multi_day_path
+import traceback
 
 
 
@@ -18,7 +18,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
     
-    
+
     # 관광지 갯수 충분한지 - 한 번이라도 부족하면 False로 전환
     enough_place = True
 
@@ -59,7 +59,9 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
     for idx_result, path_result in enumerate(result):
         print("최종 코스 결과 ", idx_result)
-        for place_result in path_result:
+        for idx, day_path_result in enumerate(path_result):
+            print(idx + 1, " 일차 최종 코스 결과 ")
+            for place_result in day_path_result:
                 print(place_result["name"])
     
     print("최종 리턴하는 코스 수 : ", len(result))
@@ -77,7 +79,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
     place_score_list_not_in_path = copy.deepcopy(place_score_list)
     
     multi_day_path = []
-    time_limit_list = []
+    time_limit_final_list = []
     
     # 날짜별 반복
     for i in range(n_day):
@@ -102,10 +104,10 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         if params["bandwidth"]:
             time_limit -= 60
             
-        time_limit_list.append(time_limit)
+        time_limit_final_list.append(time_limit)
 
         #각 날짜별 시간 계산하는 부분 종료
-
+    
         result, enough_place = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_list_not_in_path, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
         multi_day_path.append(copy.deepcopy(result))
         
