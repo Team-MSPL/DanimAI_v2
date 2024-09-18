@@ -1,6 +1,8 @@
+from AI.ai import optimize_multi_day_path
 import numpy as np
 import copy
 import pprint
+import time
 from .hill_climb import hill_climb
 from .distance import tsp
 from .initialize_greedy import initialize_greedy
@@ -54,6 +56,12 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             result.append(a)
             
     
+    # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
+    for idx_result, path_result in enumerate(result):
+        print("최종 코스 결과 ", idx_result)
+        for place_result in path_result:
+                print(place_result["name"])
+    
     print("최종 리턴하는 코스 수 : ", len(result))
 
     return result, enough_place
@@ -68,7 +76,8 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
     place_list_not_in_path = copy.deepcopy(place_list)
     place_score_list_not_in_path = copy.deepcopy(place_score_list)
     
-    path_day = []
+    multi_day_path = []
+    time_limit_list = []
     
     # 날짜별 반복
     for i in range(n_day):
@@ -92,14 +101,23 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         # 여유로운 여행이면, 60분 줄이기
         if params["bandwidth"]:
             time_limit -= 60
+            
+        time_limit_list.append(time_limit)
 
         #각 날짜별 시간 계산하는 부분 종료
 
         result, enough_place = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_list_not_in_path, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
-        path_day.append(copy.deepcopy(result))
+        multi_day_path.append(copy.deepcopy(result))
         
         
-    return path_day, enough_place
+    start = time.time()
+    #전체 경로 최적화
+    multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_list, params["move_time"])
+    end = time.time()
+
+    print(f"{end - start:.5f} sec -  전체 경로 최적화 시간")
+        
+    return multi_day_path, enough_place
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
@@ -131,6 +149,11 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_lis
         params["enough_place"] = False
         path, distance = tsp(path)
         return path, params["enough_place"]
+    
+    # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴
+    if len(place_idx_list) == 0:
+        return path, enough_place
+        
         
 
     path, idx_list, enough_place = hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path, place_idx_list, path, params)
