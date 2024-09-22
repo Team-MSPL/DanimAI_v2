@@ -1,0 +1,26 @@
+서버 키는 법
+
+nohup gunicorn -w 2 -k uvicorn.workers.UvicornWorker AI.controller:app &
+
+
+
+서버 껐다 키는 법
+먼저 ps -ef | grep gunicorn 명령어로 실행 중인 gunicorn 프로세스를 찾습니다.
+
+ps -ef | grep gunicorn
+
+예시 출력:
+
+user   12345  1  0 12:34 ?    00:00:02 gunicorn: master [AI.controller:app]
+user   12346  12345 0 12:34 ? 00:00:01 gunicorn: worker [AI.controller:app]
+위 출력에서 gunicorn의 master 프로세스 ID (예: 12345)를 확인하고, 이를 종료합니다.
+
+kill 12345
+또는, 한 번에 모든 gunicorn 프로세스를 종료하려면:
+
+pkill gunicorn
+2. 다시 실행하기
+종료 후 동일한 명령어로 gunicorn을 다시 실행하세요.
+
+nohup gunicorn -w 2 -k uvicorn.workers.UvicornWorker AI.controller:app &
+이 명령어로 gunicorn 서버가 백그라운드에서 실행됩니다. nohup을 사용하므로 터미널을 닫아도 서버는 계속 실행됩니다.

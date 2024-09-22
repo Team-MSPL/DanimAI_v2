@@ -60,12 +60,11 @@ async def ai_run(aiModel : AIModel):
 
         end = time.time()
         print(end - start)
-        return {"status" : "success",
-                "data" :{
-                    "resultData" : resultData,
-                    "enoughPlace": enough_place,
-                    "bestPointList" : bestPointList
-                }
+        return {
+            "resultData" : resultData,
+            "enoughPlace" : enough_place,
+            "bestPointList" : bestPointList
+            
         }
     except:
         return {"status" : "failed",

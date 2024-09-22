@@ -57,12 +57,12 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             
     
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
-    for idx_result, path_result in enumerate(result):
-        print("최종 코스 결과 ", idx_result)
-        for idx, day_path_result in enumerate(path_result):
-            print(idx + 1, " 일차 최종 코스 결과 ")
-            for place_result in day_path_result:
-                print(place_result["name"])
+    # for idx_result, path_result in enumerate(result):
+    #     print("최종 코스 결과 ", idx_result)
+    #     for idx, day_path_result in enumerate(path_result):
+    #         print(idx + 1, " 일차 최종 코스 결과 ")
+    #         for place_result in day_path_result:
+    #             print(place_result["name"])
     
     print("최종 리턴하는 코스 수 : ", len(result))
 
@@ -112,12 +112,12 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         multi_day_path.append(copy.deepcopy(result))
         
         
-    start = time.time()
+    #start = time.time()
     #전체 경로 최적화
     multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"])
-    end = time.time()
+    #end = time.time()
 
-    print(f"{end - start:.5f} sec -  전체 경로 최적화 시간")
+    #print(f"{end - start:.5f} sec -  전체 경로 최적화 시간")
         
     return multi_day_path, enough_place
 

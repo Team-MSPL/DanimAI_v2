@@ -17,8 +17,8 @@ CAR_TRANSIT = 30
 PUBLIC_TRANSIT = 60
 
 # 반복문 돌리는 횟수 ( 힐클라임 최대 횟수 )
-HILL_LIMIT = 10000
-HILL_SWITCH_LIMIT = 200
+HILL_LIMIT = 3000
+HILL_SWITCH_LIMIT = 100
 
 # 좌표간 거리 계산에 사용하는 큰 숫자 - 양 끝 노드 ( 숙소 )를 고정할 때 사용함
 LARGE_NUMBER = 10000
