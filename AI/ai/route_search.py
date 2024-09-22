@@ -114,7 +114,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         
     start = time.time()
     #전체 경로 최적화
-    multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_list, params["move_time"])
+    multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"])
     end = time.time()
 
     print(f"{end - start:.5f} sec -  전체 경로 최적화 시간")

@@ -16,8 +16,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
             
             path_segment.append(copy.deepcopy(place))
             
-            # 숙소 or 필수 여행지도 각각의 세그먼트에 넣어야 하니까
-            if place["is_essential"]:
+            # 숙소 or 필수 여행지도 각각의 세그먼트에 넣어야 하니까 + 4시간 이상의 긴 관광지는 위치가 바뀌면 전체 경로가 꼬이는 경우가 많음 TODO 빼도 되는지 테스트
+            if place["is_essential"] or place["takenTime"] >= 240:
                 path_segment_list.append(copy.deepcopy(path_segment))
                 
                 new_path_segment = [copy.deepcopy(place)]  # 숙소 or 필수 여행지로 시작하는 새로운 세그먼트 - [숙소, 숙소] 세그먼트가 발생하기는 함
@@ -75,6 +75,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
         # 시간 제한 초과 시, 원래 경로로 대체 - 30분 여유를 줌
         if total_time > time_limit_list[day_idx] + 30:
             print("시간 제한 초과하여, 전체 경로 최적화 작업물 복구")
+            print(total_time)
+            print(time_limit_list[day_idx])
             return multi_day_path
             
     return final_optimized_path
