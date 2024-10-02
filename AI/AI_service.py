@@ -2,6 +2,7 @@ from .ai.route_search import route_search_main
 from .firebase.firebaseAccess import FirebaseAccess
 from .preprocess import preprocess
 import numpy as np
+import copy
 from AI.resultStandardize import tendencyCalculate, standardize, getRanking
 
 def request_handler(region_list, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
@@ -9,10 +10,12 @@ def request_handler(region_list, accomodation_list, select_list, essential_place
     place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
     
     # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
-    for select in select_list:
-        for select_item in select:
+    select_list_copy = copy.deepcopy(select_list)
+    for idx, select in enumerate(select_list):
+        for idx2, select_item in enumerate(select):
             if select_item == 0:
-                select_item = -1
+                # select_item 값을 바꾼다고 select_list 내의 값이 바뀌지는 않음 / 밖에서는 선언되지 않은 값이기에
+                select_list[idx][idx2] = -1
     
     theme_matrix = np.array([
         select_list[0] + [0, 0],
@@ -28,12 +31,10 @@ def request_handler(region_list, accomodation_list, select_list, essential_place
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
     result, enough_place = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth)
 
-    # 전체 동선 최적화 추가하기
-
-    # 평균 점수 + 점수 보정 + 등수 계산
-    pathThemeList = tendencyCalculate(result, select_list)
-    pathThemeList = standardize(pathThemeList)
-    pathThemeList = getRanking(pathThemeList)
-    # print(pathThemeList)
-    return result, pathThemeList, enough_place
+    # 평균 점수 + 점수 보정 + 등수 계산 
+    best_point_list = tendencyCalculate(result, select_list_copy)
+    best_point_list = standardize(best_point_list)
+    best_point_list = getRanking(best_point_list)
+    # print(best_point_list)
+    return result, best_point_list, enough_place
 
