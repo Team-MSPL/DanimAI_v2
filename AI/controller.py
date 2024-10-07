@@ -3,6 +3,8 @@ from fastapi import FastAPI
 from fastapi import Response
 from pydantic import BaseModel
 import time
+import os
+from dotenv import load_dotenv
 from AI.AI_service import request_handler
 
 
@@ -35,6 +37,7 @@ class AIModel(BaseModel):
     transit: int
     distanceSensitivity: int
     bandwidth: bool
+    password: str
 
 print("연결 성공")
 app = FastAPI()
@@ -42,6 +45,16 @@ app = FastAPI()
 @app.post("/ai/run")
 async def ai_run(aiModel : AIModel):
     print("API 호출 성공")
+    
+    load_dotenv()
+        
+    ai_key_list = os.getenv('AI_KEY').split(',')
+    
+    if aiModel.password not in ai_key_list: 
+        return {"status" : "failed",
+                "message": 'password error'
+        }
+        
 
     try:
         start = time.time()
