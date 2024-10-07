@@ -35,7 +35,7 @@ def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_no
     popper = random.randint(math.floor(popper * 0.5), popper)
     
     # 그리디 반복 부분 - place_score_list_not_in_path 사용
-    while time_limit > time_coast and len(path) < 5 and popper >= 0:
+    while time_coast <= time_limit + 30 and len(path) < 5 and popper >= 0:
         
         
         # 관광지가 부족할 경우 (1)
@@ -52,19 +52,19 @@ def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_no
             
             place = copy.deepcopy(place_list_not_in_path[place_idx[1]])
             
-            if time_coast + place["takenTime"] <= time_limit + 30:
-                path.append(place)
-                score_sum += place_idx[0]
-                place_idx_list.append(place_idx)
-                time_coast += place["takenTime"]
-                # 이동시간 추가
-                time_coast += params["move_time"]
-                
-                
+            #if time_coast + place["takenTime"] <= time_limit + 30:
+            path.append(place)
+            score_sum += place_idx[0]
+            place_idx_list.append(place_idx)
+            time_coast += place["takenTime"]
+            # 이동시간 추가
+            time_coast += params["move_time"]
+            
+            
 
-                # place_list의 원소들의 인덱스가 place_score_list로써 저장되어 있음 -> place_list는 건들면 안됨 -> None으로 바꾸는 방법
-                del place_score_list_not_in_path[popper]
-                place_list_not_in_path[place_idx[1]] = None
+            # place_list의 원소들의 인덱스가 place_score_list로써 저장되어 있음 -> place_list는 건들면 안됨 -> None으로 바꾸는 방법
+            del place_score_list_not_in_path[popper]
+            place_list_not_in_path[place_idx[1]] = None
                 
         
         

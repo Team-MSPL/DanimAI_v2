@@ -89,7 +89,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         if i == 0:
             time_limit = (18 - time_limit_list[0]) * 60
         elif i == n_day - 1:
-            time_limit = (time_limit_list[1] - 10) * 60
+            time_limit = (time_limit_list[1] - 11) * 60
 
         # 당일치기여행이면, time_limit_list[0]~time_limit_list[1]만 생각하면 된다.
         if n_day == 1:
@@ -100,9 +100,9 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
             time_limit = time_limit * 60
         
-        # 여유로운 여행이면, 60분 줄이기
-        if params["bandwidth"]:
-            time_limit -= 60
+        # # 여유로운 여행이면, 60분 줄이기
+        # if params["bandwidth"]:
+        #     time_limit -= 60
             
         time_limit_final_list.append(time_limit)
 
@@ -158,17 +158,18 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_lis
         
         
 
-    path, idx_list, enough_place = hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path, place_idx_list, path, params)
+    #path, idx_list, enough_place = hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path, place_idx_list, path, params)
 
     # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
-    moving_time = (len(path) - 1) * moving_transit
+    #moving_time = (len(path) - 1) * moving_transit
     popper = len(path)
-    while moving_time + time_coast > time_limit and len(path) > 1 and popper > 0:
+    while time_coast > time_limit + 30 and len(path) > 1 and popper > 0:
         popper -= 1
         if not path[popper]["is_essential"]:
             place = path.pop(popper)
             idx = place_idx_list.pop()
+            #moving_time = (len(path) - 1) * moving_transit
             score_sum -= idx[0]
             time_coast -= place["takenTime"]
 
