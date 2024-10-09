@@ -3,7 +3,7 @@ import math
 import random
 
 
-def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
+def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     path = []
     time_coast = 0
     score_sum = 0
@@ -47,28 +47,18 @@ def initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_no
         
         place_idx = copy.deepcopy(place_score_list_not_in_path[popper])
         
-        # 너무 모자라도 안되니까 30분 여유를 줌 ( 원 코드 204줄 )
-        if place_list_not_in_path[place_idx[1]] is not None:
-            
-            place = copy.deepcopy(place_list_not_in_path[place_idx[1]])
-            
-            #if time_coast + place["takenTime"] <= time_limit + 30:
-            path.append(place)
-            score_sum += place_idx[0]
-            place_idx_list.append(place_idx)
-            time_coast += place["takenTime"]
-            # 이동시간 추가
-            time_coast += params["move_time"]
-            
-            
-
-            # place_list의 원소들의 인덱스가 place_score_list로써 저장되어 있음 -> place_list는 건들면 안됨 -> None으로 바꾸는 방법
-            del place_score_list_not_in_path[popper]
-            place_list_not_in_path[place_idx[1]] = None
-                
         
+        place = copy.deepcopy(place_list[place_idx[1]])
         
+        #if time_coast + place["takenTime"] <= time_limit + 30:
+        path.append(place)
+        score_sum += place_idx[0]
+        place_idx_list.append(place_idx)
+        time_coast += place["takenTime"]
+        # 이동시간 추가
+        time_coast += params["move_time"]
         
+        del place_score_list_not_in_path[popper]
         
         popper -= 1
     

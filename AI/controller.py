@@ -4,6 +4,7 @@ from fastapi import Response
 from pydantic import BaseModel
 import time
 import os
+import traceback
 from dotenv import load_dotenv
 from AI.AI_service import request_handler
 
@@ -37,7 +38,7 @@ class AIModel(BaseModel):
     transit: int
     distanceSensitivity: int
     bandwidth: bool
-    password: str
+    #password: str
 
 print("연결 성공")
 app = FastAPI()
@@ -50,10 +51,10 @@ async def ai_run(aiModel : AIModel):
         
     ai_key_list = os.getenv('AI_KEY').split(',')
     
-    if aiModel.password not in ai_key_list: 
-        return {"status" : "failed",
-                "message": 'password error'
-        }
+    # if aiModel.password not in ai_key_list: 
+    #     return {"status" : "failed",
+    #             "message": 'password error'
+    #     }
         
 
     try:
@@ -79,7 +80,9 @@ async def ai_run(aiModel : AIModel):
             "bestPointList" : bestPointList
             
         }
-    except:
+    except Exception as e:
+        print("Error occurred:")
+        print(traceback.format_exc())  # 문제 발생 시점의 스택 트레이스 출력
         return {"status" : "failed",
                 "message": 'Internal server error'
         }

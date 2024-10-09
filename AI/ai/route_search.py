@@ -23,7 +23,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     enough_place = True
 
     # 미리 스코어 계산하여 리스트화 + distance_bias는 원래 코드 123줄 즈음에 있는 ((10 - distanceSensitivityInAI) * 15) * sumForDistance를 계산한 것
-    place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum)
+    place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list)
     #이때까지는 list의 인덱스가 list 에서 id
 
     path_list = []
@@ -75,7 +75,6 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
     place_score_list_copy = copy.deepcopy(place_score_list)
     
     # 갔던 장소를 또 가지 않게 하기 위함
-    place_list_not_in_path = copy.deepcopy(place_list)
     place_score_list_not_in_path = copy.deepcopy(place_score_list)
     
     multi_day_path = []
@@ -108,7 +107,13 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
         #각 날짜별 시간 계산하는 부분 종료
     
-        result, enough_place = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_list_not_in_path, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
+        result, enough_place, place_score_list_not_in_path = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
+        
+    
+        # 각 날마다 장소 리스트를 깊은 복사: 각 날의 탐색은 독립적이어야 하므로, place_score_list_not_in_path를 각 날마다 깊은 복사해야 합니다.
+        place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
+        place_score_list_not_in_path = copy.deepcopy(place_score_list_not_in_path_copy)
+        
         multi_day_path.append(copy.deepcopy(result))
         
         
@@ -121,20 +126,12 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         
     return multi_day_path, enough_place
 
-def route_search_for_one_day(accomodation1, accomodation2, place_list, place_list_not_in_path, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
+def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
-    
-    # 각 날마다 장소 리스트를 깊은 복사: 각 날의 탐색은 독립적이어야 하므로, place_list_not_in_path와 place_score_list_not_in_path를 각 날마다 깊은 복사해야 합니다.
-    place_list_not_in_path_copy = copy.deepcopy(place_list_not_in_path)
-    place_list_not_in_path = copy.deepcopy(place_list_not_in_path_copy)
-    place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
-    place_score_list_not_in_path = copy.deepcopy(place_score_list_not_in_path_copy)
-    
         
     # 코스 초안을 만드는 그리디 알고리즘 부분
-    path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list_not_in_path, place_score_list_not_in_path, essential_place_list, time_limit, params, day)
+    path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day)
         
-    # 240123 - 하루 일정 마친 후의 숙소를 추가 -> TODO 힐클라임에도 고려하여 수정해야함
     if not accomodation2["is_dummy"]:
         path.append(accomodation2)
         time_coast += 30            # 숙소는 더이상 소요시간 x. 숙소까지 이동하는 시간 추가
@@ -156,9 +153,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_lis
     if len(place_idx_list) == 0:
         return path, enough_place
         
-        
-
-    #path, idx_list, enough_place = hill_climb(place_list, place_list_not_in_path, place_score_list_not_in_path, place_idx_list, path, params)
+    path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))
 
     # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
@@ -173,4 +168,4 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_lis
             score_sum -= idx[0]
             time_coast -= place["takenTime"]
 
-    return path, enough_place
+    return path, enough_place, place_score_list_not_in_path
