@@ -33,7 +33,7 @@ class FirebaseAccess():
 
         self.db = firestore.client()  # 파이어스토어 접근
 
-    def read_all_place(self, region, select_list, bandwidth):
+    async def read_all_place(self, region, select_list, bandwidth):
         db = self.db
         all_place_map = {}
         place_feature = []

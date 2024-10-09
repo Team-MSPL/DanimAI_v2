@@ -1,13 +1,19 @@
 from .ai.route_search import route_search_main
-from .firebase.firebaseAccess import FirebaseAccess
+#from .firebase.firebaseAccess import FirebaseAccess
 from .preprocess import preprocess
 import numpy as np
 import copy
+import asyncio
 from AI.resultStandardize import tendencyCalculate, standardize, getRanking
 
-def request_handler(region_list, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
-    fb = FirebaseAccess()
-    place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
+async def request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
+    #fb = FirebaseAccess()
+    
+    #place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
+    
+    # 이미 비동기 처리 중인 이벤트 루프 내에서 asyncio.run() 불가능
+    # # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
+    # place_list, place_feature_matrix = asyncio.run(fb.read_all_place(region_list, select_list, bandwidth))
     
     # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
     select_list_copy = copy.deepcopy(select_list)

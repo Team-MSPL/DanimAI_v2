@@ -55,8 +55,8 @@ def tendencyCalculate(path_list, select_list):
         
         pathTendencyAvg = [[x // placeNum for x in row] for row in pathTendencyAvg]
 
-        tendencyPointList = [];
-        tendencyNameList = [];
+        tendencyPointList = []
+        tendencyNameList = []
 
         for i, tendency in enumerate(pathTendencyAvg):
             for j,  score in enumerate(tendency):
@@ -71,21 +71,21 @@ def tendencyCalculate(path_list, select_list):
 def standardize(best_point_list):
 
     themeNum = len(best_point_list[0]['tendencyPointList'])
-    isEnough = False;
+    isEnough = False
 
     for i in range(themeNum):
         for tendency in best_point_list:
             if tendency['tendencyPointList'][i] > 80:
-                isEnough = True;
-                break;
+                isEnough = True
+                break
 
         if not isEnough:
             for _, path in enumerate(best_point_list):
                 diff = 100 - path['tendencyPointList'][i]
                 correction = (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10;
-                path['tendencyPointList'][i] += correction;
+                path['tendencyPointList'][i] += correction
                 if correction > 40:
-                    path['tendencyPointList'][i] -= 10;
+                    path['tendencyPointList'][i] -= 10
 
     return best_point_list
 

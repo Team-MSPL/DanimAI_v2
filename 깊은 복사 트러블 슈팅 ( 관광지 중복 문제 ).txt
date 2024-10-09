@@ -1,0 +1,48 @@
+위 if 문 코드는 중복 문제가 발생하는데, 아래 if 문 코드는 중복 문제가 해결됨
+
+
+
+        if new_score > cur_score:
+            # print("힐클라이밍 개선 성공", new_score, cur_score)    
+            
+            # 깊은 복사를 위함              
+            place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
+            
+            
+            # 바뀐 관광지 제거
+            del place_score_list_not_in_path_copy[switch_idx]
+            
+            # 기존 관광지 추가
+            place_score_list_not_in_path_copy.append(copy.deepcopy(target_place_score_idx_name))
+            place_score_list_not_in_path_copy = sorted(place_score_list_not_in_path_copy, key=lambda x: x[0])
+            
+            
+            # 깊은 복사를 위함
+            place_score_list_not_in_path = copy.deepcopy(place_score_list_not_in_path_copy)     
+            
+            cur_score = new_score
+            path = copy.deepcopy(new_path)
+            idx_list = copy.deepcopy(new_idx_list)  
+            
+            switch_time = 0
+            
+            
+
+
+
+
+        if new_score > cur_score:
+            # print("힐클라이밍 개선 성공", new_score, cur_score)    
+            
+            # 경로와 점수 리스트 업데이트
+            cur_score = new_score
+            path = copy.deepcopy(new_path)
+            idx_list = copy.deepcopy(new_idx_list)
+
+            # 관광지 리스트 업데이트
+            del place_score_list_not_in_path[switch_idx]
+            place_score_list_not_in_path.append(copy.deepcopy(target_place_score_idx_name))
+            place_score_list_not_in_path.sort(key=lambda x: x[0])
+
+            # 교체 성공 시 switch_time 초기화
+            switch_time = 0
