@@ -76,11 +76,11 @@ async def ai_run(aiModel : AIModel):
         
     ai_key_list = os.getenv('AI_KEY').split(',')
     
-    if aiModel.password not in ai_key_list: 
-        return {"status" : "failed",
-                "message": 'password error'
-        }
-        
+    # if aiModel.password not in ai_key_list: 
+    #     return {"status" : "failed",
+    #             "message": 'password error'
+    #     }
+    
 
     start = time.time()
     region_list = aiModel.regionList

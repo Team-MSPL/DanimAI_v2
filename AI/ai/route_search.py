@@ -159,7 +159,12 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
     #moving_time = (len(path) - 1) * moving_transit
     popper = len(path)
-    while time_coast > time_limit + 30 and len(path) > 1 and popper > 0:
+    
+    
+    # "is_accomodation" 값이 False인 장소들의 개수를 계산 - 아래 반복문에서 
+    non_accommodation_count = sum(1 for place in path if not place["is_accomodation"])
+    
+    while time_coast > time_limit + 30 and popper > 0 and non_accommodation_count > 1:
         popper -= 1
         if not path[popper]["is_essential"]:
             place = path.pop(popper)

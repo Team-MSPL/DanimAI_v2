@@ -24,3 +24,7 @@ pkill gunicorn
 
 nohup gunicorn -w 2 -k uvicorn.workers.UvicornWorker AI.controller:app &
 이 명령어로 gunicorn 서버가 백그라운드에서 실행됩니다. nohup을 사용하므로 터미널을 닫아도 서버는 계속 실행됩니다.
+
+
+로그 보려면
+cat nohup.out

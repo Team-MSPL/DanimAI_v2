@@ -72,8 +72,12 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
         total_time = sum(place["takenTime"] for place in day_path)
         total_time += move_time * (len(day_path) - 1)
         
-        # 시간 제한 초과 시, 원래 경로로 대체 - 30분 여유를 줌
-        if total_time > time_limit_list[day_idx] + 30:
+        # "is_accomodation" 값이 False인 장소들의 개수를 계산
+        non_accommodation_count = sum(1 for place in day_path if not place["is_accomodation"])
+
+        
+        # 시간 제한 초과 시, 원래 경로로 대체 - 30분 여유를 줌 + 하루에 관광지가 하나인 경우는 빼고 ( 하루 종일 )
+        if total_time > time_limit_list[day_idx] + 30 and non_accommodation_count > 1:
             print("시간 제한 초과하여, 전체 경로 최적화 작업물 복구")
             print(total_time)
             print(time_limit_list[day_idx])
