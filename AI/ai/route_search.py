@@ -46,15 +46,28 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         path_list.append(result)
 
 
+    # # 코스 중복 제거
+    # result = []
+    
+    # while path_list:
+    #     a = path_list.pop()  # 리스트에서 하나의 경로를 꺼냄
+    #     # 다른 경로와 중복되지 않으면 결과에 추가
+    #     if all(not np.array_equal(a, b) for b in path_list):  # path에 남아 있는 모든 경로와 비교
+    #         result.append(a)
+    
     # 코스 중복 제거
     result = []
-    
+
     while path_list:
-        a = path_list.pop()  # 리스트에서 하나의 경로를 꺼냄
-        # 다른 경로와 중복되지 않으면 결과에 추가
-        if all(not np.array_equal(a, b) for b in path_list):  # path에 남아 있는 모든 경로와 비교
-            result.append(a)
-            
+        a = path_list.pop()  # 원래 경로를 pop하여 가져옴
+        
+        # 하루치 코스를 latitude 값 기준으로 정렬하여 비교를 위한 정렬된 버전 생성
+        sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
+
+        # 다른 경로와 중복되지 않으면 원래 경로를 결과에 추가
+        if all(not np.array_equal(sorted_a, [sorted(day, key=lambda place: place['lat']) for day in b]) for b in path_list):
+            result.append(a)  # 원래 순서의 경로를 추가
+
     
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
     # for idx_result, path_result in enumerate(result):

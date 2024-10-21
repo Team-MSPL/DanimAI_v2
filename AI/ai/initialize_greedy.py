@@ -26,7 +26,19 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
     # 그리디 부분에서는 거리 계산을 안하는거로 함 ( 변동 가능 ) TODO 거리 계산까지 넣어보고 결과 비교
     
     # repeat_count만큼 더 내려가서 반복마다 차이를 줌 
-    popper = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
+    #popper = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
+    
+    # 최소와 최대 값 설정
+    min_val = len(place_score_list_not_in_path) / 2
+    max_val = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
+
+    # 범위 내에서 더 큰 값에 가중치를 부여하는 랜덤 선택
+    popper = random.choices(
+        range(int(min_val), int(max_val) + 1),
+        weights=[(i - min_val + 1) for i in range(int(min_val), int(max_val) + 1)],
+        k=1
+    )[0]
+        
         
     if popper < 0:
         popper = 0
