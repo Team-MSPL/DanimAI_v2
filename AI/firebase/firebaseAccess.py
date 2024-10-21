@@ -42,6 +42,8 @@ class FirebaseAccess():
             for r_index, r in enumerate(region):
                 # "관광지 목록" 문서는 제외
                 place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
+                #place_snapshot = db.collection("해외").document("Vietnam").collection("닌빈").where(filter=FieldFilter("name", "!=", '관광지목록')).get()
+                
                 for _, place in enumerate(place_snapshot):
                     # data.append(place.to_dict())
                     data = place.to_dict()
@@ -73,7 +75,7 @@ class FirebaseAccess():
                         "tour": data["tour"],
                         "season": data["season"],
                         "category": 0,
-                        "photo": data["photo"],
+                        "photo": data.get("photo", ""),  # photo가 없으면 빈 문자열을 기본값으로 설정
                         "regionIndex": r_index,
                         "is_essential": False,
                         "is_accomodation": False,

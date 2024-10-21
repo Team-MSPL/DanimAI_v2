@@ -41,25 +41,25 @@ class AIModel(BaseModel):
     transit: int
     distanceSensitivity: int
     bandwidth: bool
-    #password: str
+    password: str
     
 
-async def run_blocking_io_function(args):
-    # ProcessPoolExecutor를 사용하여 I/O 작업을 실행
-    loop = asyncio.get_event_loop()
-    with ProcessPoolExecutor() as executor:
-        result = await loop.run_in_executor(executor, blocking_io_function, args)
-    return result
+# async def run_blocking_io_function(args):
+#     # ProcessPoolExecutor를 사용하여 I/O 작업을 실행
+#     loop = asyncio.get_event_loop()
+#     with ProcessPoolExecutor() as executor:
+#         result = await loop.run_in_executor(executor, blocking_io_function, args)
+#     return result
 
 
-def blocking_io_function(args):
-    # I/O 작업 수행
-    # 이곳에 CPU-bound 작업이나 시간이 오래 걸리는 작업을 넣으세요.
-    place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth = args
+# def blocking_io_function(args):
+#     # I/O 작업 수행
+#     # 이곳에 CPU-bound 작업이나 시간이 오래 걸리는 작업을 넣으세요.
+#     place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth = args
     
-    resultData, bestPointList, enough_place =  asyncio.run(request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth))
+#     resultData, bestPointList, enough_place =  asyncio.run(request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth))
     
-    return resultData, bestPointList, enough_place
+#     return resultData, bestPointList, enough_place
 
 print("연결 성공")
 app = FastAPI()
@@ -76,10 +76,10 @@ async def ai_run(aiModel : AIModel):
         
     ai_key_list = os.getenv('AI_KEY').split(',')
     
-    # if aiModel.password not in ai_key_list: 
-    #     return {"status" : "failed",
-    #             "message": 'password error'
-    #     }
+    if aiModel.password not in ai_key_list: 
+        return {"status" : "failed",
+                "message": 'password error'
+        }
     
 
     start = time.time()
@@ -100,16 +100,16 @@ async def ai_run(aiModel : AIModel):
     place_list, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
     
     
-    # blocking I/O 작업을 실행
-    args = (place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth)
-    resultData, bestPointList, enough_place = await run_blocking_io_function(args)  # 비동기로 실행
+    # # blocking I/O 작업을 실행
+    # args = (place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth)
+    # resultData, bestPointList, enough_place = await run_blocking_io_function(args)  # 비동기로 실행
 
     
-    # # request_handler가 비동기 처리되도록 함
-    # resultData, bestPointList, enough_place = await request_handler(
-    #     place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
-    #     time_limit_array, n_day, transit, distance_sensitivity, bandwidth
-    # )
+    # request_handler가 비동기 처리되도록 함
+    resultData, bestPointList, enough_place = await request_handler(
+        place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
+        time_limit_array, n_day, transit, distance_sensitivity, bandwidth
+    )
 
     end = time.time()
     print(end - start)
