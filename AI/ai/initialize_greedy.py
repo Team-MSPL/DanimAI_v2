@@ -29,8 +29,12 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
     #popper = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
     
     # 최소와 최대 값 설정
-    min_val = len(place_score_list_not_in_path) / 2
+    min_val = len(place_score_list_not_in_path) // 2
     max_val = len(place_score_list_not_in_path) - 1 - params["repeat_count"]
+    
+    if max_val <= min_val:
+        max_val = min_val
+    
 
     # 범위 내에서 더 큰 값에 가중치를 부여하는 랜덤 선택
     popper = random.choices(

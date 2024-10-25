@@ -83,6 +83,13 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
 def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params):
     n_day = params["n_day"]
+    
+    print("len(place_list)")
+    print(len(place_list))
+    print(len(place_score_list))
+    print(len(accomodation_list))
+    print(len(essential_place_list))
+    print(len(time_limit_list))
 
 
     place_score_list_copy = copy.deepcopy(place_score_list)
@@ -119,19 +126,21 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         time_limit_final_list.append(time_limit)
 
         #각 날짜별 시간 계산하는 부분 종료
-    
+
         result, enough_place, place_score_list_not_in_path = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
-        
     
+
         # 각 날마다 장소 리스트를 깊은 복사: 각 날의 탐색은 독립적이어야 하므로, place_score_list_not_in_path를 각 날마다 깊은 복사해야 합니다.
         place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
         place_score_list_not_in_path = copy.deepcopy(place_score_list_not_in_path_copy)
         
         multi_day_path.append(copy.deepcopy(result))
         
+        if not params["enough_place"]:
+            if len(multi_day_path[-1]) == 0:
+                multi_day_path.pop()
+            break
         
-    #start = time.time()
-    #전체 경로 최적화
     multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"])
     #end = time.time()
 
@@ -160,11 +169,11 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
         print("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
         params["enough_place"] = False
         path, distance = tsp(path)
-        return path, params["enough_place"]
+        return path, params["enough_place"], place_score_list_not_in_path
     
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴
     if len(place_idx_list) == 0:
-        return path, enough_place
+        return path, enough_place, place_score_list_not_in_path
         
     path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))
 
