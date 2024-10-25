@@ -37,7 +37,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
     result, enough_place = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth)
 
-    # 평균 점수 + 점수 보정 + 등수 계산 
+    # 평균 점수 + 점수 보정 + 등수 계산         
     best_point_list = tendencyCalculate(result, select_list_copy)
     best_point_list = standardize(best_point_list)
     best_point_list = getRanking(best_point_list)

@@ -32,7 +32,7 @@ def tendencyCalculate(path_list, select_list):
             ['바다', '산', '드라이브', '산책', '쇼핑', '실내여행지', '시티투어', '전통'],
             ['봄', '여름', '가을', '겨울'],
         ];
-
+    
     best_point_list = []
     
     
@@ -54,7 +54,7 @@ def tendencyCalculate(path_list, select_list):
         pathTendencyAvg = multiply_2d_arrays(pathTendencyAvg, select_list)
         
         pathTendencyAvg = [[x // placeNum for x in row] for row in pathTendencyAvg]
-
+        
         tendencyPointList = []
         tendencyNameList = []
 
@@ -91,6 +91,7 @@ def standardize(best_point_list):
 
 def getRanking(best_point_list):
     for i in range(len(best_point_list[0]['tendencyPointList'])):
+        
         # 각 i번째 요소에 대한 rankList 생성
         rankList = sorted(best_point_list, key=lambda x: x['tendencyPointList'][i], reverse=True)
         
@@ -102,6 +103,25 @@ def getRanking(best_point_list):
             # 현재 path의 i번째 값에 해당하는 랭킹을 계산하여 추가
             ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
             best_point_list[j]['tendencyRanking'].append(ranking)
+def getRanking(best_point_list):
+    for i in range(len(best_point_list[0]['tendencyPointList'])):
+        
+        # 각 i번째 요소에 대해 비어있지 않은 경우만 포함하는 rankList 생성
+        rankList = sorted(
+            [path for path in best_point_list if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None],
+            key=lambda x: x['tendencyPointList'][i],
+            reverse=True
+        )
+        
+        # rankList를 정렬한 순서대로 인덱스를 부여
+        for j, path in enumerate(best_point_list):
+            if 'tendencyRanking' not in path:
+                best_point_list[j]['tendencyRanking'] = []
+            
+            # 현재 path의 i번째 값이 존재하면 랭킹을 계산하여 추가
+            if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None:
+                ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
+                best_point_list[j]['tendencyRanking'].append(ranking)
 
     return best_point_list
 
