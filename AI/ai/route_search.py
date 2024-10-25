@@ -83,13 +83,6 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
 def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params):
     n_day = params["n_day"]
-    
-    print("len(place_list)")
-    print(len(place_list))
-    print(len(place_score_list))
-    print(len(accomodation_list))
-    print(len(essential_place_list))
-    print(len(time_limit_list))
 
 
     place_score_list_copy = copy.deepcopy(place_score_list)
@@ -142,23 +135,15 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
             break
         
     multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"])
-    #end = time.time()
-
-    #print(f"{end - start:.5f} sec -  전체 경로 최적화 시간")
-        
+    
     return multi_day_path, enough_place
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
-        
+    
     # 코스 초안을 만드는 그리디 알고리즘 부분
     path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day)
-        
-    if not accomodation2["is_dummy"]:
-        path.append(accomodation2)
-        time_coast += 30            # 숙소는 더이상 소요시간 x. 숙소까지 이동하는 시간 추가
-        
-    
+            
     # 그리디 결과 프린트 - 평시에는 주석 처리할 것
     # print(params["repeat_count"], " 번째 그리디 결과")
     # for place in path:
@@ -170,18 +155,25 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
         params["enough_place"] = False
         path, distance = tsp(path)
         return path, params["enough_place"], place_score_list_not_in_path
+        
     
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴
-    if len(place_idx_list) == 0:
+    elif len(place_idx_list) == 0:
+        print("시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴")
         return path, enough_place, place_score_list_not_in_path
         
+        
+    if not accomodation2["is_dummy"]:
+        path.append(accomodation2)
+        time_coast += 30            # 숙소는 더이상 소요시간 x. 숙소까지 이동하는 시간 추가
+        
+        
     path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))
-
+    
     # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop
     moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
     #moving_time = (len(path) - 1) * moving_transit
     popper = len(path)
-    
     
     # "is_accomodation" 값이 False인 장소들의 개수를 계산 - 아래 반복문에서 
     non_accommodation_count = sum(1 for place in path if not place["is_accomodation"])
@@ -194,5 +186,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
             #moving_time = (len(path) - 1) * moving_transit
             score_sum -= idx[0]
             time_coast -= place["takenTime"]
+            time_coast -= params["move_time"]
+            non_accommodation_count -= 1
 
     return path, enough_place, place_score_list_not_in_path
