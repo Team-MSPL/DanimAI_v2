@@ -10,6 +10,9 @@ from .place_score import get_place_score_list
 from .optimize_multi_day_path import optimize_multi_day_path
 import traceback
 
+def hash_day(day):
+    # 하루치 경로의 위도와 경도를 고유하게 표현하기 위해 해시값 생성
+    return tuple((place['lat'], place['lng']) for place in day)
 
 
 pp = pprint.PrettyPrinter()
@@ -44,30 +47,24 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         result, enough_place = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
 
         path_list.append(result)
-
-
-    # # 코스 중복 제거
-    # result = []
-    
-    # while path_list:
-    #     a = path_list.pop()  # 리스트에서 하나의 경로를 꺼냄
-    #     # 다른 경로와 중복되지 않으면 결과에 추가
-    #     if all(not np.array_equal(a, b) for b in path_list):  # path에 남아 있는 모든 경로와 비교
-    #         result.append(a)
-    
-    # 코스 중복 제거
+        
+    # 해시를 사용하여 중복 제거
     result = []
+    seen_hashes = set()
 
     while path_list:
         a = path_list.pop()  # 원래 경로를 pop하여 가져옴
         
-        # 하루치 코스를 latitude 값 기준으로 정렬하여 비교를 위한 정렬된 버전 생성
+        # 각 하루치 경로를 위도(lat) 기준으로 정렬
         sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
-
-        # 다른 경로와 중복되지 않으면 원래 경로를 결과에 추가
-        if all(not np.array_equal(sorted_a, [sorted(day, key=lambda place: place['lat']) for day in b]) for b in path_list):
-            result.append(a)  # 원래 순서의 경로를 추가
-
+        
+        # 경로의 고유성을 해시값으로 표현하여 확인
+        a_hash = tuple(hash_day(day) for day in sorted_a)
+        
+        # 고유한 해시값이 없는 경우만 결과에 추가
+        if a_hash not in seen_hashes:
+            seen_hashes.add(a_hash)
+            result.append(copy.deepcopy(a))
     
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
     # for idx_result, path_result in enumerate(result):
@@ -121,7 +118,6 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         #각 날짜별 시간 계산하는 부분 종료
 
         result, enough_place, place_score_list_not_in_path = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
-    
 
         # 각 날마다 장소 리스트를 깊은 복사: 각 날의 탐색은 독립적이어야 하므로, place_score_list_not_in_path를 각 날마다 깊은 복사해야 합니다.
         place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
@@ -133,13 +129,19 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
             if len(multi_day_path[-1]) == 0:
                 multi_day_path.pop()
             break
-        
+
     multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"])
-    
+        
     return multi_day_path, enough_place
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
+    
+    # 남은 관광지가 없을 경우 바로 리턴
+    if len(place_score_list_not_in_path) <= 0:
+        print("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
+        params["enough_place"] = False
+        return [], params["enough_place"], place_score_list_not_in_path
     
     # 코스 초안을 만드는 그리디 알고리즘 부분
     path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day)
@@ -151,9 +153,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     
     # 남은 관광지가 없을 경우 힐클라이밍 건너뛰고 tsp만하고 리턴
     if len(place_score_list_not_in_path) <= 0:
-        print("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
-        params["enough_place"] = False
-        path, distance = tsp(path)
+        path, _ = tsp(path)
         return path, params["enough_place"], place_score_list_not_in_path
         
     
@@ -188,5 +188,9 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
             time_coast -= place["takenTime"]
             time_coast -= params["move_time"]
             non_accommodation_count -= 1
+            
+            # 관광지 점수 리스트도 업데이트 - 만약 같은 관광지 중복으로 뜨는 문제 생기면 여기 지울 것! - TODO 중복 문제 해결하고 이거 주석 풀 것
+            #place_score_list_not_in_path.append(copy.deepcopy([idx[0],idx[1],idx[2]]))
+            #place_score_list_not_in_path.sort(key=lambda x: x[0])
 
     return path, enough_place, place_score_list_not_in_path

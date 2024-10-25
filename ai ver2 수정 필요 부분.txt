@@ -4,6 +4,13 @@
 selectList에서 0인값을 -1로 바꿔서 AI 실행해보고, 결과값 테스트
 
 
+route_search.py 마지막 부분
+            # 관광지 점수 리스트도 업데이트 - 만약 같은 관광지 중복으로 뜨는 문제 생기면 여기 지울 것! - TODO 중복 문제 해결하고 이거 주석 풀 것
+            #place_score_list_not_in_path.append(copy.deepcopy([idx[0],idx[1],idx[2]]))
+            #place_score_list_not_in_path.sort(key=lambda x: x[0])
+
+
+
 머신 러닝 관련
 4. 학습해서 성향 가중치 수정 ai 개선 - 인기도 분산 또는 표준편차 + 7개중 총 pathPoint 따져서
 

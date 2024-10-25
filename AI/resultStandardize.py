@@ -106,7 +106,8 @@ def getRanking(best_point_list):
 def getRanking(best_point_list):
     for i in range(len(best_point_list[0]['tendencyPointList'])):
         
-        # 각 i번째 요소에 대해 비어있지 않은 경우만 포함하는 rankList 생성
+        # 각 i번째 요소에 대해 비어있지 않은 경우만 포함하는 rankList 생성 - 
+        # 성향 선택 없이 계절 값만 넣었는데, 코스 내에 계절 점수가 40점 이상인게 1개도 없을 경우
         rankList = sorted(
             [path for path in best_point_list if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None],
             key=lambda x: x['tendencyPointList'][i],
