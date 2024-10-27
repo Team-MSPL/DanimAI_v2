@@ -3,6 +3,7 @@ from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 import os
 import numpy as np
+import copy
 
 from google.cloud.firestore_v1 import FieldFilter
 
@@ -81,7 +82,12 @@ class FirebaseAccess():
                         "is_accomodation": False,
                         "is_dummy": False
                     }
+                    
+                    
 
+                    # id 키가 있으면 제거
+                    place.pop("id", None)  # 'None'은 'id'가 없을 경우 KeyError를 방지
+                    
                     feature = np.array([[
                         data["partner"] + [0, 0],
                         data["concept"] + [0, 0, 0],

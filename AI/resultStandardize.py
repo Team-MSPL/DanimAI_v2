@@ -86,11 +86,12 @@ def standardize(best_point_list):
 
         if not isEnough:
             for _, path in enumerate(best_point_list):
-                diff = 100 - path['tendencyPointList'][i]
-                correction = (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10;
-                path['tendencyPointList'][i] += correction
-                if correction > 40:
-                    path['tendencyPointList'][i] -= 10
+                if len(path['tendencyPointList']) >= 1:
+                    diff = 100 - path['tendencyPointList'][i]
+                    correction = (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10;
+                    path['tendencyPointList'][i] += correction
+                    if correction > 40:
+                        path['tendencyPointList'][i] -= 10
 
     return best_point_list
 
