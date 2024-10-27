@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from AI.AI_service import request_handler
 from .firebase.firebaseAccess import FirebaseAccess
 from concurrent.futures import ProcessPoolExecutor
-
+import logging
 
 # 숙소 및 필수여행지 input값을 추가하고자 할 때 여기 수정
 class AccomodationListItem(BaseModel):
@@ -69,6 +69,10 @@ app = FastAPI()
 
 # 서버 시작 시 환경 변수를 한 번만 로드
 load_dotenv()
+
+
+# 로깅 기본 설정 (한 번만 실행)
+logging.basicConfig(level=logging.DEBUG)
 
 @app.post("/ai/run")
 async def ai_run(aiModel : AIModel):

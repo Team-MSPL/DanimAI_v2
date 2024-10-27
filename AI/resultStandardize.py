@@ -71,11 +71,16 @@ def tendencyCalculate(path_list, select_list):
 def standardize(best_point_list):
 
     themeNum = len(best_point_list[0]['tendencyPointList'])
+    
+    # 첫 번째 코스에서 성향이 0개이더라도 이후 코스들은 1개 이상일 수 있음
+    if themeNum <= 1:
+        themeNum = 1
     isEnough = False
 
     for i in range(themeNum):
         for tendency in best_point_list:
-            if tendency['tendencyPointList'][i] > 80:
+            # 코스에서 성향 점수가 없는 경우 방지 - 성향 선택 없이 계절 값만 넣었는데, 코스 내에 계절 점수가 40점 이상인게 1개도 없을 경우
+            if len(tendency['tendencyPointList']) >= 1 and tendency['tendencyPointList'][i] > 80:
                 isEnough = True
                 break
 
@@ -89,20 +94,6 @@ def standardize(best_point_list):
 
     return best_point_list
 
-def getRanking(best_point_list):
-    for i in range(len(best_point_list[0]['tendencyPointList'])):
-        
-        # 각 i번째 요소에 대한 rankList 생성
-        rankList = sorted(best_point_list, key=lambda x: x['tendencyPointList'][i], reverse=True)
-        
-        # rankList를 정렬한 순서대로 인덱스를 부여
-        for j, path in enumerate(best_point_list):
-            if 'tendencyRanking' not in path:
-                best_point_list[j]['tendencyRanking'] = []
-            
-            # 현재 path의 i번째 값에 해당하는 랭킹을 계산하여 추가
-            ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
-            best_point_list[j]['tendencyRanking'].append(ranking)
 def getRanking(best_point_list):
     for i in range(len(best_point_list[0]['tendencyPointList'])):
         

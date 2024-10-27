@@ -1,0 +1,14 @@
+{
+    "apps": [
+        {
+            "name": "my-app",
+            "script": "gunicorn -w 4 -k uvicorn.workers.UvicornWorker --reload AI.controller:app",
+            "watch": false,
+            "max_memory_restart": "256M",
+            "output": "/var/www/html/logs/my-app-out.log",
+            "error": "/var/www/html/logs/my-app-error.log",
+            "kill_timeout": 5000,
+            "restartDelay": 5000
+        }
+    ]
+}
