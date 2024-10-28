@@ -1,6 +1,7 @@
 import copy
 import math
 import random
+from ..logging_config import logger
 
 
 def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
@@ -56,7 +57,7 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
         
         # 관광지가 부족할 경우 (1)
         if len(place_score_list_not_in_path) < 0:        
-            print("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list_not_in_path))
+            logger.info("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list_not_in_path))
             params["enough_place"] = False
             break
         

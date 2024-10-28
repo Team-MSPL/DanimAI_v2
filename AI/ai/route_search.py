@@ -9,6 +9,7 @@ from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
 from .place_score import get_place_score_list
 from .optimize_multi_day_path import optimize_multi_day_path
 import traceback
+from ..logging_config import logger
 
 def hash_day(day):
     # 하루치 경로의 위도와 경도를 고유하게 표현하기 위해 해시값 생성
@@ -74,7 +75,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     #         for place_result in day_path_result:
     #             print(place_result["name"])
     
-    print("최종 리턴하는 코스 수 : ", len(result))
+    logger.info("최종 리턴하는 코스 수 : ", len(result))
 
     return result, enough_place
 
@@ -139,7 +140,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     
     # 남은 관광지가 없을 경우 바로 리턴
     if len(place_score_list_not_in_path) <= 0:
-        print("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
+        logger.info("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
         params["enough_place"] = False
         return [], params["enough_place"], place_score_list_not_in_path
     
@@ -159,7 +160,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴
     elif len(place_idx_list) == 0:
-        print("시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴")
+        logger.info("시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴")
         return path, enough_place, place_score_list_not_in_path
         
         

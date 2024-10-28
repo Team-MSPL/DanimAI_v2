@@ -1,5 +1,7 @@
 import copy
 import traceback
+from .common.constant import RESULT_NUM
+from .logging_config import logger
 
 # 2차원 배열을 원소별로 합하는 함수
 def sum_2d_arrays(arr1, arr2):
@@ -69,29 +71,24 @@ def tendencyCalculate(path_list, select_list):
     return best_point_list
 
 def standardize(best_point_list):
+    def calculate_correction(diff):
+        return (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10
 
-    themeNum = len(best_point_list[0]['tendencyPointList'])
-    
-    # 첫 번째 코스에서 성향이 0개이더라도 이후 코스들은 1개 이상일 수 있음
-    if themeNum <= 1:
-        themeNum = 1
-    isEnough = False
+    isEnough = [False] * RESULT_NUM
 
-    for i in range(themeNum):
-        for tendency in best_point_list:
-            # 코스에서 성향 점수가 없는 경우 방지 - 성향 선택 없이 계절 값만 넣었는데, 코스 내에 계절 점수가 40점 이상인게 1개도 없을 경우
-            if len(tendency['tendencyPointList']) >= 1 and tendency['tendencyPointList'][i] > 80:
-                isEnough = True
-                break
+    for idx, path in enumerate(best_point_list):
+        isEnough[idx] = any(tendencyPoint > 80 for tendencyPoint in path['tendencyPointList'])
 
-        if not isEnough:
-            for _, path in enumerate(best_point_list):
-                if len(path['tendencyPointList']) >= 1:
-                    diff = 100 - path['tendencyPointList'][i]
-                    correction = (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10;
-                    path['tendencyPointList'][i] += correction
-                    if correction > 40:
-                        path['tendencyPointList'][i] -= 10
+        if not isEnough[idx]:
+            logger.info(path['tendencyPointList'])
+            for idx2, _ in enumerate(path['tendencyPointList']):
+                diff = 100 - path['tendencyPointList'][idx2]
+                correction = calculate_correction(diff)
+                best_point_list[idx]['tendencyPointList'][idx2] += correction
+
+                if correction > 40:
+                    best_point_list[idx]['tendencyPointList'][idx2] -= 10
+
 
     return best_point_list
 

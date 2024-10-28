@@ -7,8 +7,13 @@
             "max_memory_restart": "256M",
             "output": "/var/www/html/logs/my-app-out.log",
             "error": "/var/www/html/logs/my-app-error.log",
+            "log_date_format": "YYYY-MM-DD HH:mm Z",
+            "merge_logs": true,
             "kill_timeout": 5000,
-            "restartDelay": 5000
+            "restart_delay": 5000,
+            "env": {
+                "LOG_LEVEL": "DEBUG"
+            }
         }
     ]
 }

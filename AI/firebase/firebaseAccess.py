@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import numpy as np
 import copy
+from ..logging_config import logger
 
 from google.cloud.firestore_v1 import FieldFilter
 
@@ -103,6 +104,6 @@ class FirebaseAccess():
                     else:
                         place_feature = np.append(place_feature, feature, axis=0)    # Deep Copy가 된다는 사실 확인하였음
         except Exception as error:
-            print("관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:", error)
+            logger.info("관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:", error)
 
         return all_place_map, place_feature

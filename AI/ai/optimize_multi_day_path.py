@@ -1,5 +1,6 @@
 import copy
 from .distance import tsp
+import logging
 
 def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
     path_segment = []
@@ -94,7 +95,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
         
         # 시간 초과 발생 시 처리 - 30분 여유를 줌 + 하루에 관광지가 하나인 경우는 빼고 ( 하루 종일 )
         if total_time > time_limit_list[day_idx] + 30 and non_accommodation_count > 1:
-            print(f"Day {day_idx+1}의 시간 제한 초과: {total_time} > {time_limit_list[day_idx]}")
+            logger.info(f"Day {day_idx+1}의 시간 제한 초과: {total_time} > {time_limit_list[day_idx]}")
 
             # 비필수 장소 목록 필터링
             non_essential_places = [place for place in day_path if not place["is_essential"] and not place["is_accomodation"]]
@@ -109,11 +110,11 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
                 total_time -= place_to_remove["takenTime"]
                 total_time -= move_time  # 장소 하나 제거했으므로 이동 시간도 감소
                 
-                print(f"Removed {place_to_remove['name']} to reduce time. New total time: {total_time}")
+                logger.info(f"Removed {place_to_remove['name']} to reduce time. New total time: {total_time}")
             
             # 최적화 후에도 시간 초과가 계속되면 원래 경로 복구
             if total_time > time_limit_list[day_idx] + 30:
-                print(f"전체 경로 최적화 후 시간 제한 초과하여, Day {day_idx+1} 경로 원래대로 복구")
+                logger.info(f"전체 경로 최적화 후 시간 제한 초과하여, Day {day_idx+1} 경로 원래대로 복구")
                 return multi_day_path
             
     return final_optimized_path

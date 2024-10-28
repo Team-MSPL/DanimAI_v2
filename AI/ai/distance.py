@@ -2,6 +2,7 @@ import numpy as np
 import copy
 import math
 from ..common.constant import LARGE_NUMBER
+from ..logging_config import logger
 from python_tsp.heuristics import solve_tsp_local_search
 
 def tsp(path):
@@ -108,7 +109,7 @@ def tsp_fixed_accomodation(path):
     # 여러번 시도해보았으나, start 숙소는 고정 잘 되는 듯, 아직 테스트 단계라 냅둠
     elif start_accommodation is not None and permutation[0] != 0:
         new_permutation = permutation[permutation.index(0):] + permutation[:permutation.index(0)]
-        print("tsp에서 start 숙소의 위치가 바뀜", permutation, new_permutation)
+        logger.info("tsp에서 start 숙소의 위치가 바뀜", permutation, new_permutation)
         permutation = new_permutation
         
         
