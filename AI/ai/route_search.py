@@ -8,6 +8,7 @@ from .initialize_greedy import initialize_greedy
 from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
 from .place_score import get_place_score_list
 from .optimize_multi_day_path import optimize_multi_day_path
+from .remove_intersections import remove_routes_with_intersections
 import traceback
 from ..logging_config import logger
 
@@ -49,12 +50,18 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
         path_list.append(result)
         
+        
+        
+    # 교차하는 지점이 있는 코스 제거
+    path_list_without_intersections = remove_routes_with_intersections(path_list)
+    
+        
     # 해시를 사용하여 중복 제거
     result = []
     seen_hashes = set()
 
-    while path_list:
-        a = path_list.pop()  # 원래 경로를 pop하여 가져옴
+    while path_list_without_intersections:
+        a = path_list_without_intersections.pop()  # 원래 경로를 pop하여 가져옴
         
         # 각 하루치 경로를 위도(lat) 기준으로 정렬
         sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]

@@ -178,4 +178,5 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 logger.info(f"전체 경로 최적화 후 시간 제한 초과하여, Day {day_idx+1} 경로 원래대로 복구")
                 return multi_day_path
             
+    
     return final_optimized_path

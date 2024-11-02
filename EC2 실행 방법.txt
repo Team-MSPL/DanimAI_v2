@@ -12,3 +12,7 @@ nohup gunicorn -w 2 -k uvicorn.workers.UvicornWorker --reload AI.controller:app 
 
 pm2 설치하고 pm2.json 실행하는거로 바꿈 - 로그를 터미널에서 바로 볼 수 있음
 주의점 : pm2 명령어에 --watch 붙이면 에러남. json 안에 -reload 넣어놓았으니까 그냥 pm2 start pm2.json 만 할 것!
+
+
+코스 교차 검사용 라이브러리
+pip install shapely
