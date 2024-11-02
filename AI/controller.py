@@ -20,6 +20,10 @@ class AccomodationListItem(BaseModel):
     takenTime: int
     category: int
     regionIndex: Optional[int] = None  # regionIndex는 선택적인 값으로 설정
+    id: Optional[str] = None
+    photo: Optional[str] = None  # photo는 선택적인 값으로 설정
+    formatted_address: Optional[str] = None
+    region: Optional[str] = None
 
 class EssentialPlaceListItem(BaseModel):
     day: int
@@ -28,8 +32,11 @@ class EssentialPlaceListItem(BaseModel):
     lng: float
     category: int
     takenTime: int
-    id: int
+    id: Optional[str] = None
     regionIndex: Optional[int] = None  # regionIndex는 선택적인 값으로 설정
+    photo: Optional[str] = None  # photo는 선택적인 값으로 설정
+    formatted_address: Optional[str] = None
+    region: Optional[str] = None
 
 class AIModel(BaseModel):
     regionList: List[str]
@@ -108,7 +115,8 @@ async def ai_run(aiModel : AIModel):
     # args = (place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth)
     # resultData, bestPointList, enough_place = await run_blocking_io_function(args)  # 비동기로 실행
 
-    
+    logger.info(place_list)
+    logger.info(place_feature_matrix)
     # request_handler가 비동기 처리되도록 함
     resultData, bestPointList, enough_place = await request_handler(
         place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,

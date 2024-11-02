@@ -5,6 +5,7 @@ import numpy as np
 import copy
 import asyncio
 from AI.resultStandardize import tendencyCalculate, standardize, getRanking
+from .logging_config import logger
 
 async def request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
     #fb = FirebaseAccess()
@@ -32,7 +33,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
     ], dtype=int)
 
     # 선작업, Firebase 데이터 수집 + place 객체들 데이터 전처리
-    place_list, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list, place_feature_matrix)
+    place_list, place_feature_matrix, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list, place_feature_matrix)
     
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
     result, enough_place = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth)

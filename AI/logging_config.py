@@ -11,11 +11,13 @@ logging.basicConfig(
 logger = logging.getLogger("my_app_logger")
 
 # 파일 핸들러 설정
-error_handler = logging.FileHandler('/var/www/html/logs/my-app-error.log')
+#error_handler = logging.FileHandler('/var/www/html/logs/my-app-error.log')
+error_handler = logging.FileHandler('/home/ubuntu/.pm2/logs/my-app-error.log')
 error_handler.setLevel(logging.WARNING)
 error_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 
-info_handler = logging.FileHandler('/var/www/html/logs/my-app-out.log')
+#info_handler = logging.FileHandler('/var/www/html/logs/my-app-out.log')
+info_handler = logging.FileHandler('/home/ubuntu/.pm2/logs/my-app-out.log')
 info_handler.setLevel(logging.INFO)
 info_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 

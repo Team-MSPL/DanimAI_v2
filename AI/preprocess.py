@@ -1,14 +1,16 @@
 from .common.constant import Dummy
+import numpy as np
+from .logging_config import logger
 
 
 def preprocess(place_list, ex_essential_list, ex_accomodation_list, place_feature_matrix):
     essential_list = essential_place_list_adaptor(ex_essential_list)
     accomodation_list = accomodation_list_adaptor(ex_accomodation_list)
-    place_list = remove_duplicates(place_list, essential_list + accomodation_list, place_feature_matrix)
-    return place_list, essential_list, accomodation_list
+    place_list, place_feature_matrix = remove_duplicates(place_list, essential_list + accomodation_list, place_feature_matrix)
+    return place_list, place_feature_matrix, essential_list, accomodation_list
 
 def compare(place1, place2): # 다른 장소면  return true - 위도, 경도 중 하나는 같을 수 있으니 or 연산으로
-    return abs(place1["lat"] - place2["lat"]) >= 0.002 or abs(place1["lng"] - place2["lng"]) >= 0.002
+    return abs(place1["lat"] - place2["lat"]) >= 0.0002 or abs(place1["lng"] - place2["lng"]) >= 0.0002
 
 # 사용자가 넣은 숙소 및 필수여행지가 place_list에도 있는 것을 방지함
 def remove_duplicates(place_list, ex_list, place_feature_matrix):
@@ -16,12 +18,17 @@ def remove_duplicates(place_list, ex_list, place_feature_matrix):
     for idx, place in place_list.items():
         flag = True
         for ex in ex_list:
-            if not compare(place, ex) and ex["name"] is not "":
+            if not compare(place, ex) and ex["name"] != "":
                 flag = False
-                del place_feature_matrix[idx]
+                logger.info("필수여행지 및 숙소와 중복되는 장소 삭제")
+                logger.info(place["name"])
+                #del place_feature_matrix[idx]
+                place_feature_matrix = np.delete(place_feature_matrix, idx, axis=0)
+                logger.info(len(place_feature_matrix))
+
         if flag:
             new_place_list.append(place)
-    return new_place_list
+    return new_place_list, place_feature_matrix
 
 def essential_place_list_adaptor(external_place_list):
     adapted_list = []
