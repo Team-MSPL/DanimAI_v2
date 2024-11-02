@@ -75,7 +75,8 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     #         for place_result in day_path_result:
     #             print(place_result["name"])
     
-    logger.info("최종 리턴하는 코스 수 : ", len(result))
+    logger.info("최종 리턴하는 코스 수 : %s", str(len(result)))
+
 
     return result, enough_place
 
@@ -131,7 +132,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
                 multi_day_path.pop()
             break
 
-    multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"])
+    multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)
         
     return multi_day_path, enough_place
 

@@ -1,8 +1,19 @@
 import copy
 from .distance import tsp
-import logging
+from ..logging_config import logger
 
-def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
+def is_within_range(place1, place2, target_place):
+    lat_min = min(place1['lat'], place2['lat'])
+    lat_max = max(place1['lat'], place2['lat'])
+    lng_min = min(place1['lng'], place2['lng'])
+    lng_max = max(place1['lng'], place2['lng'])
+
+    is_lat_within = lat_min <= target_place['lat'] <= lat_max
+    is_lng_within = lng_min <= target_place['lng'] <= lng_max
+
+    return is_lat_within and is_lng_within
+
+def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_list, place_score_list_not_in_path):
     path_segment = []
     path_segment_list = []
     optimized_segment_list = []
@@ -17,8 +28,10 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
             
             path_segment.append(copy.deepcopy(place))
             
-            # 숙소 or 필수 여행지도 각각의 세그먼트에 넣어야 하니까 + 4시간 이상의 긴 관광지는 위치가 바뀌면 전체 경로가 꼬이는 경우가 많음 TODO 빼도 되는지 테스트
-            if place["is_essential"] or place["takenTime"] >= 240:
+            # 숙소 or 필수 여행지도 각각의 세그먼트에 넣어야 하니까
+            # 4시간 이상의 긴 관광지는 위치가 바뀌면 전체 경로가 꼬이는 경우가 많음 TODO 빼도 되는지 테스트
+            #if place["is_essential"] or place["takenTime"] >= 240:
+            if place["is_essential"]:
                 path_segment_list.append(copy.deepcopy(path_segment))
                 
                 new_path_segment = [copy.deepcopy(place)]  # 숙소 or 필수 여행지로 시작하는 새로운 세그먼트 - [숙소, 숙소] 세그먼트가 발생하기는 함
@@ -35,9 +48,6 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
     # Step 3: 각각의 세그먼트를 다시 path로 쪼개 넣어 줌
     #for segment_idx, segment in enumerate(optimized_segment_list):
     #   for place_idx, place in enumerate(segment):
-            
-            
-            
     
     final_optimized_path = []
     segment_index = 0
@@ -67,24 +77,6 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
         
         final_optimized_path.append(day_path)
     
-    
-    # # Step 4: 만약 코스별 제한 시간이 많이 초과될 경우, 원래 코스 리턴
-    # for day_idx, day_path in enumerate(final_optimized_path):
-    #     total_time = sum(place["takenTime"] for place in day_path)
-    #     total_time += move_time * (len(day_path) - 1)
-        
-    #     # "is_accomodation" 값이 False인 장소들의 개수를 계산
-    #     non_accommodation_count = sum(1 for place in day_path if not place["is_accomodation"])
-
-        
-    #     # 시간 제한 초과 시, 원래 경로로 대체 - 30분 여유를 줌 + 하루에 관광지가 하나인 경우는 빼고 ( 하루 종일 )
-    #     if total_time > time_limit_list[day_idx] + 30 and non_accommodation_count > 1:
-    #         print("전체 경로 최적화 후 시간 제한 초과하여, 전체 경로 최적화 작업물 복구")
-    #         print(total_time)
-    #         print(time_limit_list[day_idx])
-    #         return multi_day_path
-        
-
     # Step 4: 시간 초과 시 경로 수정
     for day_idx, day_path in enumerate(final_optimized_path):
         total_time = sum(place["takenTime"] for place in day_path)
@@ -93,9 +85,78 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time):
         # "is_accomodation" 값이 False인 장소들의 개수를 계산
         non_accommodation_count = sum(1 for place in day_path if not place["is_accomodation"])
         
+        
+        # 시간 부족 발생 시 처리
+        if total_time < time_limit_list[day_idx] - 60:
+            logger.info(f"Day {day_idx+1}의 시간 제한 - 60분 미만: {total_time} < {time_limit_list[day_idx] - 60}")
+            flag = True
+            # 위도와 경도를 범위로 동선 안해치는 관광지를 추가 ( 점수 높은 순서대로 고려 )
+            # 마지막날이 아니면 다음날 첫 여행지를 기준으로
+            if day_idx != len(final_optimized_path) - 1:
+                place1 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
+                if day_path[-1]["is_accomodation"]:
+                    place1 = {"lat":day_path[-2]["lat"], "lng":day_path[-2]["lng"]}
+                place2 = {"lat":final_optimized_path[day_idx + 1][0]["lat"], "lng":final_optimized_path[day_idx + 1][0]["lng"]}
+                
+                popper = len(place_score_list_not_in_path) - 1
+                for i in range(len(place_score_list_not_in_path)):
+                    score_idx_name = place_score_list_not_in_path[popper]
+                    search_place = place_list[score_idx_name[1]]
+                    
+                    if is_within_range(place1,place2,search_place):
+                        if day_path[-1]["is_accomodation"]:
+                            day_path.insert(-1, copy.deepcopy(search_place))
+                        else:
+                            day_path.append(copy.deepcopy(search_place))
+                        
+                        del place_score_list_not_in_path[popper]
+                        
+                        logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", search_place["name"])
+
+                        total_time = sum(place["takenTime"] for place in day_path)
+                        total_time += move_time * (len(day_path) - 1)
+                        if total_time >= time_limit_list[day_idx] - 60 or len(place_score_list_not_in_path) == 0:
+                            flag = False
+                            break
+                        
+                    popper -= 1
+                    
+            # 첫날이 아니면 전날 마지막 여행지를 기준으로
+            if day_idx != 0 and flag:
+                place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}  
+                if day_path[0]["is_accomodation"]:
+                    place1 = {"lat":day_path[1]["lat"], "lng":day_path[1]["lng"]}              
+                place2 = {"lat":final_optimized_path[day_idx-1][-1]["lat"], "lng":final_optimized_path[day_idx-1][-1]["lng"]}
+                
+                popper = len(place_score_list_not_in_path) - 1
+                for i in range(len(place_score_list_not_in_path)):
+                    score_idx_name = place_score_list_not_in_path[popper]
+                    search_place = place_list[score_idx_name[1]]
+                    
+                    if is_within_range(place1,place2,search_place):
+                        if day_path[0]["is_accomodation"]:
+                            day_path.insert(1, copy.deepcopy(search_place))
+                        else:
+                            day_path.insert(0, copy.deepcopy(search_place))
+                            
+                        del place_score_list_not_in_path[popper]
+                        
+                        logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", search_place["name"])
+                        
+                        total_time = sum(place["takenTime"] for place in day_path)
+                        total_time += move_time * (len(day_path) - 1)
+                        if total_time >= time_limit_list[day_idx] - 60 or len(place_score_list_not_in_path) == 0:
+                            break
+                        
+                    popper -= 1
+            
+            
+            non_accommodation_count = sum(1 for place in day_path if not place["is_accomodation"])
+        
+        
         # 시간 초과 발생 시 처리 - 30분 여유를 줌 + 하루에 관광지가 하나인 경우는 빼고 ( 하루 종일 )
-        if total_time > time_limit_list[day_idx] + 30 and non_accommodation_count > 1:
-            logger.info(f"Day {day_idx+1}의 시간 제한 초과: {total_time} > {time_limit_list[day_idx]}")
+        elif total_time > time_limit_list[day_idx] + 60 and non_accommodation_count > 1:
+            logger.info(f"Day {day_idx+1}의 시간 제한 + 60분 초과: {total_time} > {time_limit_list[day_idx] + 60}")
 
             # 비필수 장소 목록 필터링
             non_essential_places = [place for place in day_path if not place["is_essential"] and not place["is_accomodation"]]

@@ -39,7 +39,6 @@ class FirebaseAccess():
         db = self.db
         all_place_map = {}
         place_feature = []
-        logger.info("as42432423424")
         try:
             idx = 0
             for r_index, r in enumerate(region):
@@ -47,9 +46,6 @@ class FirebaseAccess():
                 place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
                 #place_snapshot = db.collection("해외").document("Vietnam").collection("닌빈").where(filter=FieldFilter("name", "!=", '관광지목록')).get()
                 
-                # logger.info("as42432423424")
-                # logger.info(region)
-                # logger.info(place_snapshot)
                 for _, place in enumerate(place_snapshot):
                     # data.append(place.to_dict())
                     data = place.to_dict()

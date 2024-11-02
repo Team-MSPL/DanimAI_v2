@@ -80,7 +80,6 @@ def standardize(best_point_list):
         isEnough[idx] = any(tendencyPoint > 80 for tendencyPoint in path['tendencyPointList'])
 
         if not isEnough[idx]:
-            logger.info(path['tendencyPointList'])
             for idx2, _ in enumerate(path['tendencyPointList']):
                 diff = 100 - path['tendencyPointList'][idx2]
                 correction = calculate_correction(diff)
