@@ -17,6 +17,11 @@ CAR_COEFF :Final = 5
 CAR_TRANSIT = 30
 PUBLIC_TRANSIT = 60
 
+# 시간 넘쳤다고 or 부족하다고 판단하는 기준 - UNDER_TIME은 저거보다 넘칠 때 반복을 중단하기에, 낮게 줌
+# total_time >= time_limit_list[day_idx] - UNDER_TIME
+OVER_TIME = 60
+UNDER_TIME = 120
+
 # 반복문 돌리는 횟수 ( 힐클라임 최대 횟수 )
 HILL_LIMIT = 3000
 HILL_SWITCH_LIMIT = 100

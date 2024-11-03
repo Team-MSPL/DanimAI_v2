@@ -11,6 +11,7 @@ from .optimize_multi_day_path import optimize_multi_day_path
 from .remove_intersections import remove_routes_with_intersections
 import traceback
 from ..logging_config import logger
+from ..common.constant import OVER_TIME, UNDER_TIME
 
 def hash_day(day):
     # 하루치 경로의 위도와 경도를 고유하게 표현하기 위해 해시값 생성
@@ -179,27 +180,27 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
         
     path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))
     
-    # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop
-    moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
-    #moving_time = (len(path) - 1) * moving_transit
-    popper = len(path)
+    # 힐 클라이밍 이후 시간 제한 이상으로 튀어버린 여행 코스 뒷부분부터 pop - TODO 어차피 전체 경로 최적화 후에 이 작업 한 번 더 하니까, 하단 TODO 해결될 때 까진 주석
+    # moving_transit = CAR_TRANSIT if transit == 0 else PUBLIC_TRANSIT
+    # #moving_time = (len(path) - 1) * moving_transit
+    # popper = len(path)
     
-    # "is_accomodation" 값이 False인 장소들의 개수를 계산 - 아래 반복문에서 
-    non_accommodation_count = sum(1 for place in path if not place["is_accomodation"])
+    # # "is_accomodation" 값이 False인 장소들의 개수를 계산 - 아래 반복문에서 
+    # non_accommodation_count = sum(1 for place in path if not place["is_accomodation"])
     
-    while time_coast > time_limit + 30 and popper > 0 and non_accommodation_count > 1:
-        popper -= 1
-        if not path[popper]["is_essential"]:
-            place = path.pop(popper)
-            idx = place_idx_list.pop()
-            #moving_time = (len(path) - 1) * moving_transit
-            score_sum -= idx[0]
-            time_coast -= place["takenTime"]
-            time_coast -= params["move_time"]
-            non_accommodation_count -= 1
+    # while time_coast > time_limit + OVER_TIME and popper > 0 and non_accommodation_count > 1:
+    #     popper -= 1
+    #     if not path[popper]["is_essential"]:
+    #         place = path.pop(popper)
+    #         idx = place_idx_list.pop()
+    #         #moving_time = (len(path) - 1) * moving_transit
+    #         score_sum -= idx[0]
+    #         time_coast -= place["takenTime"]
+    #         time_coast -= params["move_time"]
+    #         non_accommodation_count -= 1
             
-            # 관광지 점수 리스트도 업데이트 - 만약 같은 관광지 중복으로 뜨는 문제 생기면 여기 지울 것! - TODO 중복 문제 해결하고 이거 주석 풀 것
-            #place_score_list_not_in_path.append(copy.deepcopy([idx[0],idx[1],idx[2]]))
-            #place_score_list_not_in_path.sort(key=lambda x: x[0])
+    #         # 관광지 점수 리스트도 업데이트 - 만약 같은 관광지 중복으로 뜨는 문제 생기면 여기 지울 것! - TODO 중복 문제 해결하고 이거 주석 풀 것
+    #         #place_score_list_not_in_path.append(copy.deepcopy([idx[0],idx[1],idx[2]]))
+    #         #place_score_list_not_in_path.sort(key=lambda x: x[0])
 
     return path, enough_place, place_score_list_not_in_path

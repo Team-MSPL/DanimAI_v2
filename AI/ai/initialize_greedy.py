@@ -2,6 +2,7 @@ import copy
 import math
 import random
 from ..logging_config import logger
+from ..common.constant import OVER_TIME
 
 
 def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
@@ -51,8 +52,8 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
     # 랜덤 값을 넣어 줌
     popper = random.randint(math.floor(popper * 0.5), popper)
     
-    # 그리디 반복 부분 - place_score_list_not_in_path 사용
-    while time_coast <= time_limit + 30 and len(path) < 5 and popper >= 0:
+    # 그리디 반복 부분 - place_score_list_not_in_path 사용 / OVER_TIME 적용 안함 -> 시간이 넘쳐야 그리디가 끝나게 설정해뒀으므로
+    while time_coast <= time_limit and len(path) < 5 and popper >= 0:
         
         
         # 관광지가 부족할 경우 (1)
