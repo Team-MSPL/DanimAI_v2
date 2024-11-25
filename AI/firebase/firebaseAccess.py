@@ -63,7 +63,7 @@ class FirebaseAccess():
 
                     # 계절도 예외처리 - 여긴 더 심하게 낮은 점수로
                     data["season"][:] = [-100000 if x <= 40 else x for x in data["season"]]
-
+                    
                     place = {
                         "name": data["name"],
                         "lat": data["latitude"],

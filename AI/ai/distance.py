@@ -41,20 +41,66 @@ def tsp_common(path):
             distance_matrix[i][j] = math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
     distance_matrix = np.array(distance_matrix)
     
-    # tsp 라이브러리 실행
+    
+    # 가장 긴 경로 탐색
+    max_distance = -1
+    max_pair = (0, 0)
+    for i in range(len_path):
+        for j in range(len_path):
+            if distance_matrix[i][j] > max_distance:
+                max_distance = distance_matrix[i][j]
+                max_pair = (i, j)
+    
+    # 가장 긴 경로 제거 (큰 값을 무한대 대체)
+    distance_matrix[max_pair[0]][max_pair[1]] = float('inf')
+    distance_matrix[max_pair[1]][max_pair[0]] = float('inf')
+    
+    # TSP 계산 (긴 경로 제거한 상태)
     permutation, distance = solve_tsp_local_search(distance_matrix)
     
-    #tsp는 원점 회귀 이기 때문에, 마지막 노드에서 첫 노드로 돌아오는 거리는 빼 줘야 함
-    start = permutation[0]
-    end = permutation[-1]
-    lat_diff = path[start]["lat"] - path[end]["lat"]
-    lon_diff = path[start]["lng"] - path[end]["lng"]
-    distance -= math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
+    # 제거된 경로의 거리 다시 추가
+    distance += max_distance
     
-    # 최종 경로를 permutation 순서에 맞게 재구성
+    # 최종 경로 재구성
     ts_path = [path[i] for i in permutation]
     
     return ts_path, distance
+    
+    # # tsp 라이브러리 실행
+    # permutation, distance = solve_tsp_local_search(distance_matrix)
+    
+    # #tsp는 원점 회귀 이기 때문에, 마지막 노드에서 첫 노드로 돌아오는 거리는 빼 줘야 함
+    # start = permutation[0]
+    # end = permutation[-1]
+    # lat_diff = path[start]["lat"] - path[end]["lat"]
+    # lon_diff = path[start]["lng"] - path[end]["lng"]
+    # distance -= math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
+    
+    # # 최종 경로를 permutation 순서에 맞게 재구성
+    # ts_path = [path[i] for i in permutation]
+    
+    # # 첫 노드와 두 번째 노드, 첫 노드와 마지막 노드 간 거리 비교
+    # start = permutation[0]
+    # second = permutation[1]
+    # end = permutation[-1]
+    
+    # dist_start_to_second = distance_matrix[start][second]
+    # dist_start_to_end = distance_matrix[start][end]
+    
+    # # tsp는 원점 회귀 이기 때문에, 마지막 노드에서 첫 노드로 돌아오는 거리는 빼 줘야 함
+    # # 첫 관광지에서 두 번째 관광지로의 거리 > 첫 관광지에서 마지막 관광지로의 거리인 경우 역순 경로 생성
+    # # 1-2-3-4 에서 1-2간 거리 > 1-4간 거리 => 1-4-3-2가 더 빠름
+    # if dist_start_to_second > dist_start_to_end:
+    #     reversed_part = list(reversed(ts_path[1:]))  # 첫 장소를 제외하고 역순으로
+    #     ts_path = [ts_path[0]] + reversed_part  # 첫 장소를 고정
+    #     # 거리 재계산
+    #     distance = 0
+    #     for i in range(len(ts_path) - 1):
+    #         current_index = path.index(ts_path[i])
+    #         next_index = path.index(ts_path[i + 1])
+    #         distance += distance_matrix[current_index][next_index]
+            
+    # return ts_path, distance
 
 # 맨 앞 or 맨 뒤에 숙소가 있는 경우 처리 ( 한쪽만 )
 def tsp_fixed_accomodation(path):
