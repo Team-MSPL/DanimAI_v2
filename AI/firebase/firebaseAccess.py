@@ -103,6 +103,6 @@ class FirebaseAccess():
                     else:
                         place_feature = np.append(place_feature, feature, axis=0)    # Deep Copy가 된다는 사실 확인하였음
         except Exception as error:
-            logger.info("관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:", error)
+            logger.info(f"관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:, {error}")
 
         return all_place_map, place_feature

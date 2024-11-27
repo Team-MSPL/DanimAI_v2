@@ -17,7 +17,7 @@ def remove_routes_with_intersections(path):
         return LineString(coordinates)
 
     def count_intersections(route):
-        # 하루치 코스를 LineString으로 변환
+        # 하루치 코스를 LineString으로 변환 - 당일치기일땐 필요 x
         daily_lines = [create_daily_line(day_path) for day_path in route if len(day_path) > 1]
         
         # 각 코스 간 교차 여부 확인

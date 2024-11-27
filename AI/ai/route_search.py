@@ -56,7 +56,6 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     # 교차하는 지점이 있는 코스 제거
     path_list_without_intersections = remove_routes_with_intersections(path_list)
     
-        
     # 해시를 사용하여 중복 제거
     result = []
     seen_hashes = set()
@@ -77,11 +76,11 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
     # for idx_result, path_result in enumerate(result):
-    #     print("최종 코스 결과 ", idx_result)
+    #    logger.info(f"최종 코스 결과 , {idx_result}")
     #     for idx, day_path_result in enumerate(path_result):
-    #         print(idx + 1, " 일차 최종 코스 결과 ")
+    #        logger.info(f"{idx + 1},  일차 최종 코스 결과 ")
     #         for place_result in day_path_result:
-    #             print(place_result["name"])
+    #            logger.info(place_result["name"])
     
     logger.info("최종 리턴하는 코스 수 : %s", str(len(result)))
 

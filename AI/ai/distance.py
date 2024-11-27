@@ -6,6 +6,11 @@ from ..logging_config import logger
 from python_tsp.heuristics import solve_tsp_local_search
 
 def tsp(path):
+    
+    if len(path) == 2:
+        lat_diff = path[0]["lat"] - path[1]["lat"]
+        lon_diff = path[0]["lng"] - path[1]["lng"]
+        return path, math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
         
     # 참조 오류 해결을 위함 - tsp에서는 순서가 섞이기에 참조하던 원본 path가 유지되지 않을 수 있음
     copy_path = copy.deepcopy(path)
@@ -23,10 +28,52 @@ def tsp(path):
         return ts_path, distance
     
     else:
-        ts_path, distance = tsp_common(copy_path)
+        # ts_path, distance = tsp_common(copy_path)
+        ts_path, distance = find_greedy_path_outside_to_closest(copy_path)
+        
         return ts_path, distance
 
 
+def find_greedy_path_outside_to_closest(path):
+    def calculate_distance(place1, place2):
+        """Calculate Euclidean distance between two places."""
+        lat_diff = place1["lat"] - place2["lat"]
+        lng_diff = place1["lng"] - place2["lng"]
+        return math.sqrt(lat_diff**2 + lng_diff**2)
+
+    # Step 1: Calculate the center point of all places
+    total_lat = sum(place["lat"] for place in path)
+    total_lng = sum(place["lng"] for place in path)
+    center_lat = total_lat / len(path)
+    center_lng = total_lng / len(path)
+    center_point = {"lat": center_lat, "lng": center_lng}
+    
+    # Step 2: Find the outermost starting point (farthest from the center)
+    max_distance = -float("inf")
+    start_place = None
+    for place in path:
+        distance_from_center = calculate_distance(place, center_point)
+        if distance_from_center > max_distance:
+            max_distance = distance_from_center
+            start_place = place
+    
+    # Step 3: Initialize
+    unvisited = path[:]
+    unvisited.remove(start_place)
+    current_place = start_place
+    greedy_path = [current_place]
+    total_distance = 0
+    
+    # Step 4: Greedily connect to the nearest unvisited place
+    while unvisited:
+        nearest_place = min(unvisited, key=lambda place: calculate_distance(current_place, place))
+        distance_to_nearest = calculate_distance(current_place, nearest_place)
+        total_distance += distance_to_nearest
+        greedy_path.append(nearest_place)
+        unvisited.remove(nearest_place)
+        current_place = nearest_place
+
+    return greedy_path, total_distance
 #일반적인 경우의 tsp
 def tsp_common(path):
     
@@ -63,6 +110,20 @@ def tsp_common(path):
     
     # 최종 경로 재구성
     ts_path = [path[i] for i in permutation]
+    
+    
+    # # 디버깅용 거리 출력
+    # total_distance = 0
+    # segment_distance_list = []
+    # for i in range(len(ts_path) - 1):
+    #     current_index = permutation[i]
+    #     next_index = permutation[i + 1]
+    #     segment_distance = distance_matrix[current_index][next_index]
+    #     segment_distance_list.append(segment_distance)
+    #     total_distance += segment_distance    
+    # logger.info(f"Distances between points in the selected path:: {segment_distance_list}")
+    
+    
     
     return ts_path, distance
     
