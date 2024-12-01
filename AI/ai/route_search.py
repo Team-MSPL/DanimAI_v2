@@ -33,6 +33,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     #이때까지는 list의 인덱스가 list 에서 id
 
     path_list = []
+    clustering_ok_list = [] # clustering이 잘 된 path면 True
 
     # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
     for t in range(RESULT_NUM):
@@ -47,12 +48,20 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         
         # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
         # deepcopy를 이용하여 각 반복별로 이미 경로에 들어간 관광지를 따로따로 제거
-        result, enough_place = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
+        result, enough_place, clustering_ok = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
 
         path_list.append(result)
+        clustering_ok_list.append(clustering_ok)
         
         
-        
+    # 클러스터링 잘 된 코스가 하나라도 있으면 안된 코스들은 제거
+    if clustering_ok_list.count(True) > 1:
+        len_path_list = len(path_list)
+        for idx in range(len_path_list):
+            if not clustering_ok_list[idx]:
+                del path_list[idx]
+        logger.info("클러스터링 잘 안된 코스들은 제거 : %s 개", str(len_path_list - len(path_list)))
+    
     # 교차하는 지점이 있는 코스 제거
     path_list_without_intersections = remove_routes_with_intersections(path_list)
     
@@ -139,9 +148,9 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
                 multi_day_path.pop()
             break
 
-    multi_day_path = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)
+    multi_day_path, clustering_ok = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)
         
-    return multi_day_path, enough_place
+    return multi_day_path, enough_place, clustering_ok
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
