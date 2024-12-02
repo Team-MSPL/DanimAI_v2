@@ -256,9 +256,6 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     place_num_avg = len(places_to_cluster) // len(multi_day_path)
     # 소숫점 첫째자리가 5이상이면 +2, 아니면 +1
     max_cluster_size = place_num_avg + 2 if int(len(places_to_cluster) / len(multi_day_path) * 10) % 10 >= 5 else place_num_avg + 1
-    logger.info("max_cluster_size")
-    logger.info(place_num_avg)
-    logger.info(max_cluster_size)
     
     
     # Step 2: 필수 여행지가 있는 경우 당일 배정된 필수 여행지들의 중점 좌표와 가까운 장소들로 채워서, 갯수가 place_num_avg 이상이 되게 
@@ -322,7 +319,6 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 
             #클러스터를 new_day_path에 추가
             new_day_path.extend(copy.deepcopy(clustered_places[0]))
-            del clustered_places[0]
                         
             if day_path[-1]["is_accomodation"]:
                 new_day_path.append(copy.deepcopy(day_path[-1]))

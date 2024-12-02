@@ -8,7 +8,7 @@ import copy
 def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_size, max_cluster_size):
     
     if target_cluster_count == 1:
-        return places_to_cluster, True
+        return [places_to_cluster], True    # 2차원 배열로 리턴
     
     # elif target_cluster_count == 2:
     #     return [places_to_cluster[0:min_cluster_size], places_to_cluster[min_cluster_size + 1:]], True
