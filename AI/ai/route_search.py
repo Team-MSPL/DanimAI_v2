@@ -57,9 +57,8 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     # 클러스터링 잘 된 코스가 하나라도 있으면 안된 코스들은 제거
     if clustering_ok_list.count(True) > 1:
         len_path_list = len(path_list)
-        for idx in range(len_path_list):
-            if not clustering_ok_list[idx]:
-                del path_list[idx]
+        path_list = [path for idx, path in enumerate(path_list) if clustering_ok_list[idx]]
+
         logger.info("클러스터링 잘 안된 코스들은 제거 : %s 개", str(len_path_list - len(path_list)))
     
     # 교차하는 지점이 있는 코스 제거

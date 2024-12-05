@@ -42,11 +42,13 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
                 
                 if is_within_range(place1,place2,search_place):
                     
-                    day_path.insert(-1, copy.deepcopy(search_place))
+                    add_place = copy.deepcopy(search_place)
+                    
+                    day_path.insert(-1, add_place)
                     
                     del place_score_list_not_in_path[popper]
                     
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", search_place["name"])
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
                     
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
@@ -61,12 +63,15 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
         total_time += move_time * (len(day_path) - 1)
             
         for index, score_index_name in enumerate(place_score_list_not_in_path):
-            if score_index_name[1] >= median_index and place_list[score_index_name[1]]["takenTime"] <= total_time - (time_limit_list[day_idx] - UNDER_TIME):
-                day_path.append(copy.deepcopy(place_list[index]))
+            if index >= median_index and place_list[score_index_name[1]]["takenTime"] <= total_time - (time_limit_list[day_idx] - UNDER_TIME):
+                
+                add_place = copy.deepcopy(place_list[score_index_name[1]])
+                
+                day_path.append(add_place)
                     
                 del place_score_list_not_in_path[index]
                     
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", place_list[index]["name"])
+                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
                     
                 if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                     return day_path
@@ -88,14 +93,17 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
                 search_place = place_list[score_idx_name[1]]
                 
                 if is_within_range(place1,place2,search_place):
+                    
+                    add_place = copy.deepcopy(search_place)
+                    
                     if day_path[-1]["is_accomodation"]:
-                        day_path.insert(-1, copy.deepcopy(search_place))
+                        day_path.insert(-1, add_place)
                     else:
-                        day_path.append(copy.deepcopy(search_place))
+                        day_path.append(add_place)
                     
                     del place_score_list_not_in_path[popper]
                     
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", search_place["name"])
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
                     
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
@@ -116,14 +124,17 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
                 search_place = place_list[score_idx_name[1]]
                 
                 if is_within_range(place1,place2,search_place):
+                    
+                    add_place = copy.deepcopy(search_place)
+                    
                     if day_path[0]["is_accomodation"]:
-                        day_path.insert(1, copy.deepcopy(search_place))
+                        day_path.insert(1, add_place)
                     else:
-                        day_path.insert(0, copy.deepcopy(search_place))
+                        day_path.insert(0, add_place)
                         
                     del place_score_list_not_in_path[popper]
                     
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v2 - %s", search_place["name"])
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v2 - %s", add_place["name"])
                     
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
@@ -165,14 +176,17 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
             closest_places = [place for _, place in closest_places]
             
             for item in closest_places:
+                
+                add_place = copy.deepcopy(item)
+                
                 if day_path[-1]["is_accomodation"]:
-                    day_path.insert(-1, copy.deepcopy(item))
+                    day_path.insert(-1, add_place)
                 else:
-                    day_path.append(copy.deepcopy(item))
+                    day_path.append(add_place)
                 
-                del place_score_list_not_in_path[popper]
+                place_score_list_not_in_path = [element for element in place_score_list_not_in_path if element[2] != add_place["name"]]
                 
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v3 - %s", item["name"])
+                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v3 - %s", add_place["name"])
                 
                 if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                     return day_path
@@ -210,14 +224,17 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
             closest_places = [place for _, place in closest_places]
             
             for item in closest_places:
-                if day_path[0]["is_accomodation"]:
-                    day_path.insert(1, copy.deepcopy(item))
-                else:
-                    day_path.insert(0, copy.deepcopy(item))
-                    
-                del place_score_list_not_in_path[popper]
                 
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v4 - %s", item["name"])
+                add_place = copy.deepcopy(item)
+                
+                if day_path[0]["is_accomodation"]:
+                    day_path.insert(1, add_place)
+                else:
+                    day_path.insert(0, add_place)
+                    
+                place_score_list_not_in_path = [element for element in place_score_list_not_in_path if element[2] != add_place["name"]]
+                
+                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v4 - %s", add_place["name"])
                 
                 if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                     return day_path
@@ -318,7 +335,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 new_day_path.append(copy.deepcopy(day_path[0]))
                 
             #클러스터를 new_day_path에 추가
-            new_day_path.extend(copy.deepcopy(clustered_places[0]))
+            new_day_path.extend(copy.deepcopy(clustered_places.pop(0)))
                         
             if day_path[-1]["is_accomodation"]:
                 new_day_path.append(copy.deepcopy(day_path[-1]))
@@ -350,9 +367,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 total_time -= place_to_remove["takenTime"]
                 total_time -= move_time  # 장소 하나 제거했으므로 이동 시간도 감소
                 
-                logger.info(f"Removed {place_to_remove['name']} randomly to reduce time. New total time: {total_time}")
-
-            
+                #  TODO place_list에서 찾아서 place_score_list_not_in_path에 다시 추가
+                
             # 최적화 후에도 시간 초과가 계속되면 원래 경로 복구
             if total_time > time_limit_list[day_idx] + OVER_TIME:
                 logger.info(f"전체 경로 최적화 후 시간 제한 초과하여, Day {day_idx+1} 경로 원래대로 복구")
@@ -368,7 +384,6 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 time_limit_list, move_time, 
                 place_list, place_score_list_not_in_path
             )
-            logger.info(f"Time loss filled for Day {day_idx+1}. New total time: {total_time}")
 
     
     return final_optimized_path, clustering_ok

@@ -8,7 +8,7 @@ import copy
 def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_size, max_cluster_size):
     
     if target_cluster_count == 1:
-        return [places_to_cluster], True    # 2차원 배열로 리턴
+        return [places_to_cluster], False    # 2차원 배열로 리턴
     
     # elif target_cluster_count == 2:
     #     return [places_to_cluster[0:min_cluster_size], places_to_cluster[min_cluster_size + 1:]], True
@@ -20,7 +20,8 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
     lat_lon[:, 1] = lat_lon[:, 1] * np.cos(np.radians(lat_lon[:, 0]))  # 경도를 위도에 맞게 보정
 
     # 스케일링하여 클러스터링 성능 향상 - 위도, 경도는 너무 오밀조밀하게 모여있음
-    scaler = StandardScaler()
+    #scaler = StandardScaler()
+    scaler = RobustScaler()
     scaled_coordinates = scaler.fit_transform(lat_lon)
     
     # 초기 클러스터링 수행
@@ -36,7 +37,8 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
     # 모든 점을 노이즈로 볼 때 - 데이터 갯수가 너무 적거나
     if len(cluster_centers) == 0:
         # RobustScaler로 스케일링 다시 (중앙값과 IQR 사용)
-        scaler = RobustScaler()
+        #scaler = RobustScaler()
+        scaler = StandardScaler()
         scaled_coordinates = scaler.fit_transform(lat_lon)
         
         clustering = hdbscan.HDBSCAN(min_cluster_size=min_cluster_size, max_cluster_size=max_cluster_size, min_samples=1)

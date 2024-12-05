@@ -54,9 +54,9 @@ class FirebaseAccess():
                     if select_list[0][6] == 1 and data["partner"][6] == 0:
                         continue
 
-                    #여유로운 여행이면 takenTime 30분 추가 - 240122
+                    #여유로운 여행이면 takenTime 60분 추가 - 241205
                     if bandwidth:
-                        data["takenTime"] += 30
+                        data["takenTime"] += 60
 
                     # 실내여행지 예외처리 - 관광지 점수가 40점 이하면 걍 -10000으로 바꿔서 잘 안뜨게 함
                     data["tour"][5] = -10000 if data["tour"][5] <= 40 else data["tour"][5]
