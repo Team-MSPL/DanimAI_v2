@@ -65,6 +65,11 @@ def tendencyCalculate(path_list, select_list):
                 if score > 0:
                     tendencyPointList.append(score)
                     tendencyNameList.append(tendencyData[i][j])
+                elif select_list[i][j] > 0 and i != 4:
+                    # 20점 넣고 랭킹에 제대로 뜨게 하자 + 계절 제외
+                    tendencyPointList.append(20)
+                    tendencyNameList.append(tendencyData[i][j])
+                    
 
         best_point_list.append({'tendencyNameList': tendencyNameList, 'tendencyPointList': tendencyPointList})
 
@@ -81,6 +86,10 @@ def standardize(best_point_list):
 
         if not isEnough[idx]:
             for idx2, _ in enumerate(path['tendencyPointList']):
+                # 20점 이하이면 standardize X, 위에 20점 넣은 애들도 걸러지게
+                if path['tendencyPointList'][idx2] <= 20:
+                    continue
+                
                 diff = 100 - path['tendencyPointList'][idx2]
                 correction = calculate_correction(diff)
                 best_point_list[idx]['tendencyPointList'][idx2] += correction
@@ -111,6 +120,14 @@ def getRanking(best_point_list):
             if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None:
                 ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
                 best_point_list[j]['tendencyRanking'].append(ranking)
+                
+    # # 랭킹 다 매기고, 20점 짜리 애들 삭제
+    # for i, path in enumerate(best_point_list):
+    #     for j in range(len(best_point_list[i]['tendencyPointList'])):
+    #         if best_point_list[i]['tendencyPointList'][j] == 20:
+    #             del best_point_list[i]['tendencyNameList'][j]
+    #             del best_point_list[i]['tendencyPointList'][j]
+    #             del best_point_list[i]['tendencyRanking'][j]
 
     return best_point_list
 
