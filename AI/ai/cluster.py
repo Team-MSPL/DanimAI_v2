@@ -10,6 +10,12 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
     if target_cluster_count == 1:
         return [places_to_cluster], False    # 2차원 배열로 리턴
     
+    elif len(places_to_cluster) < 3:
+        logger.info(f"places_to_cluster 갯수가 3개 이하라 클러스터링 불가, target_cluster_count는 1보다 큼. 하나씩 넣어서 리턴함 places_to_cluster: {places_to_cluster} target_cluster_count: {target_cluster_count}")
+        if target_cluster_count == 2:
+            return [places_to_cluster[0], places_to_cluster[1]], False    # 2차원 배열로 리턴
+        
+    
     # elif target_cluster_count == 2:
     #     return [places_to_cluster[0:min_cluster_size], places_to_cluster[min_cluster_size + 1:]], True
     

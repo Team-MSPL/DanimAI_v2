@@ -267,10 +267,11 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             else:
                 if not place["is_accomodation"]:
                     essential_count_list[idx] += 1
-        
+                    
+    #하루당 평균 관광지 수 - places_to_cluster 갯수에 따라 변하지 않도록
+    len_places_to_cluster = len(places_to_cluster) 
+    place_num_avg = len_places_to_cluster // len(multi_day_path)
     
-    #하루당 평균 관광지 수
-    place_num_avg = len(places_to_cluster) // len(multi_day_path)
     # 소숫점 첫째자리가 5이상이면 +2, 아니면 +1
     max_cluster_size = place_num_avg + 2 if int(len(places_to_cluster) / len(multi_day_path) * 10) % 10 >= 5 else place_num_avg + 1
     
@@ -295,11 +296,12 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             for i in sorted_indices[:place_num_avg - len(essential_places_without_accomodation)]:
                 place_to_add = places_to_cluster[i]
                 places_to_add.append(copy.deepcopy(place_to_add))
-                
-                # 추가한 장소는 places_to_cluster에서 제거
-                if place_to_add in places_to_cluster:
-                    places_to_cluster.remove(place_to_add)
             
+            for i, item in enumerate(places_to_add):
+                # 추가한 장소는 places_to_cluster에서 제거
+                if item in places_to_cluster:
+                    places_to_cluster.remove(item)
+                    
             # 하루치 코스 구성
             new_day_path = []
             
@@ -359,8 +361,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             
             non_essential_places = [place for place in day_path if not place["is_essential"] and not place["is_accomodation"]]
             
-            # 랜덤하게 비필수 장소 제거 ( 기준 변경 가능 )
-            while non_essential_places and total_time > time_limit_list[day_idx] + OVER_TIME:
+            # 랜덤하게 비필수 장소 제거 ( 기준 변경 가능 ) + day_path가 최소 1개는 남아야 함
+            while non_essential_places and total_time > time_limit_list[day_idx] + OVER_TIME and len(day_path) >= 1:
                 place_to_remove = random.choice(non_essential_places)  # 랜덤 선택
                 non_essential_places.remove(place_to_remove)  # 목록에서 제거
                 day_path.remove(place_to_remove)  # 경로에서 제거
