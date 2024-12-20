@@ -268,6 +268,17 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 if not place["is_accomodation"]:
                     essential_count_list[idx] += 1
                     
+    
+    # 전부 필수여행지로만 채운 경우, 바로 리턴
+    if len(places_to_cluster) == 0:
+        final_optimized_path = []
+        for i, day_path in enumerate(multi_day_path):
+            optimized_day_path, _ = tsp(day_path)
+            final_optimized_path.append(copy.deepcopy(tsp(optimized_day_path)))
+        return final_optimized_path, False
+    
+    
+    
     #하루당 평균 관광지 수 - places_to_cluster 갯수에 따라 변하지 않도록
     len_places_to_cluster = len(places_to_cluster) 
     place_num_avg = len_places_to_cluster // len(multi_day_path)
