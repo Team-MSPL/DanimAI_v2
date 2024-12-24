@@ -146,9 +146,24 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
             if len(multi_day_path[-1]) == 0:
                 multi_day_path.pop()
             break
-
-    multi_day_path, clustering_ok = optimize_multi_day_path(multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)
         
+    # 시간 제한이 너무 짧아 greedy 에서 관광지 추가 를 못한 경우 처리 - day_path 중 하나는 []
+    # 빈 배열의 위치 저장
+    empty_indices = [index for index, item in enumerate(multi_day_path) if item == []]
+
+    # 빈 배열([])을 제거한 새로운 배열 생성
+    filtered_multi_day_path = copy.deepcopy([item for item in multi_day_path if item != []])
+
+    if len(filtered_multi_day_path) > 0:
+        filtered_multi_day_path, clustering_ok = optimize_multi_day_path(filtered_multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)
+        
+    # 나중에 빈 배열을 같은 위치에 추가
+    for index in empty_indices:
+        if index == len(multi_day_path) - 1:
+            filtered_multi_day_path.append([])
+        else:
+            filtered_multi_day_path.insert(index, [])
+    
     return multi_day_path, enough_place, clustering_ok
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
@@ -167,6 +182,11 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     # print(params["repeat_count"], " 번째 그리디 결과")
     # for place in path:
     #     print(place["name"])
+        
+    if not accomodation2["is_dummy"]:
+        path.append(accomodation2)
+        time_coast += 30            # 숙소는 더이상 소요시간 x. 숙소까지 이동하는 시간 추가
+        
     
     # 남은 관광지가 없을 경우 힐클라이밍 건너뛰고 tsp만하고 리턴
     if len(place_score_list_not_in_path) <= 0:
@@ -174,15 +194,10 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
         return path, params["enough_place"], place_score_list_not_in_path
         
     
-    # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴
+    # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴 -> path = []
     elif len(place_idx_list) == 0:
         logger.info("시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴")
         return path, enough_place, place_score_list_not_in_path
-        
-        
-    if not accomodation2["is_dummy"]:
-        path.append(accomodation2)
-        time_coast += 30            # 숙소는 더이상 소요시간 x. 숙소까지 이동하는 시간 추가
         
         
     path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))

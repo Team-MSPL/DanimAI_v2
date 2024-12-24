@@ -48,7 +48,7 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
                     
                     del place_score_list_not_in_path[popper]
                     
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - 당일치기 - %s", add_place["name"])
                     
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
@@ -71,7 +71,7 @@ def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, mov
                     
                 del place_score_list_not_in_path[index]
                     
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
+                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - 당일치기 2 - %s", add_place["name"])
                     
                 if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                     return day_path
@@ -333,7 +333,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             
     
     # Step 3: 클러스터링 - 인접한 관광지끼리 묶음. min_cluster_size는 하루당 평균 관광지 수를 기반으로
-    clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), place_num_avg, max_cluster_size)
+    if essential_count_list.count(0) > 0:
+        clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), place_num_avg, max_cluster_size)
         
     final_optimized_path = []
     
@@ -368,7 +369,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 
         # 시간 초과 발생 시 처리 -  여유를 줌 + 하루에 관광지가 하나인 경우는 빼고 ( 하루 종일 )
         if total_time > time_limit_list[day_idx] + OVER_TIME and non_accommodation_count > 1:
-            logger.info(f"Day {day_idx+1}의 시간 제한 + OVER_TIME 초과: {total_time} > {time_limit_list[day_idx] + OVER_TIME}")
+            #logger.info(f"Day {day_idx+1}의 시간 제한 + OVER_TIME 초과: {total_time} > {time_limit_list[day_idx] + OVER_TIME}")
             
             non_essential_places = [place for place in day_path if not place["is_essential"] and not place["is_accomodation"]]
             
@@ -390,7 +391,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             
         # 시간 부족 발생 시 처리 (초과 처리 이후 확인 - 부족보단 많은게 낫다고 판단)
         if total_time < time_limit_list[day_idx] - UNDER_TIME:
-            logger.info(f"Day {day_idx+1}의 시간 제한 - UNDER_TIME 미만: {total_time} < {time_limit_list[day_idx] - UNDER_TIME}")
+            #logger.info(f"Day {day_idx+1}의 시간 제한 - UNDER_TIME 미만: {total_time} < {time_limit_list[day_idx] - UNDER_TIME}")
 
             day_path = fill_time_loss(
                 day_idx, day_path, final_optimized_path, 
