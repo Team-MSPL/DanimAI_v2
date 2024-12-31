@@ -58,7 +58,7 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
         
         # 관광지가 부족할 경우 (1)
         if len(place_score_list_not_in_path) < 0:        
-            logger.info("관광지가 부족할 경우 (1) / 관광지 갯수 : ", len(place_score_list_not_in_path))
+            logger.info("관광지가 부족할 경우 (1) / 관광지 갯수 : " + len(place_score_list_not_in_path))
             params["enough_place"] = False
             break
         
@@ -79,6 +79,25 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
         del place_score_list_not_in_path[popper]
         
         popper -= 1
+        
+        
+    # 하나는 추천하도록 / 나중에 optimize_multi_day_path할 때 Min Cluster 에러 안나도록 - TODO 수정 가능성
+    if len(place_idx_list) == 0 and params["enough_place"] == True:
+        place_idx = copy.deepcopy(place_score_list_not_in_path[popper])
+        
+        
+        place = copy.deepcopy(place_list[place_idx[1]])
+        
+        #if time_coast + place["takenTime"] <= time_limit + 30:
+        path.append(place)
+        score_sum += place_idx[0]
+        place_idx_list.append(place_idx)
+        time_coast += place["takenTime"]
+        # 이동시간 추가
+        time_coast += params["move_time"]
+        
+        del place_score_list_not_in_path[popper]
+        
     
     
     return path, time_coast, score_sum, place_idx_list, params["enough_place"]

@@ -269,19 +269,18 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                     essential_count_list[idx] += 1
                     
     
-    # 전부 필수여행지로만 채운 경우, 바로 리턴
-    if len(places_to_cluster) == 0:
-        final_optimized_path = []
-        for i, day_path in enumerate(multi_day_path):
-            optimized_day_path, _ = tsp(day_path)
-            final_optimized_path.append(copy.deepcopy(tsp(optimized_day_path)))
-        return final_optimized_path, False
-    
-    
-    
     #하루당 평균 관광지 수 - places_to_cluster 갯수에 따라 변하지 않도록
     len_places_to_cluster = len(places_to_cluster) 
     place_num_avg = len_places_to_cluster // len(multi_day_path)
+    
+    # 전부 필수여행지로만 채운 경우, 바로 리턴
+    if len(places_to_cluster) < 2 or place_num_avg < 2:
+        logger.info(f"여행지 갯수가 거의 없는 경우 - 바로 리턴, place_num_avg :  {place_num_avg}, len_places_to_cluster : {len_places_to_cluster}")
+        final_optimized_path = []
+        for i, day_path in enumerate(multi_day_path):
+            optimized_day_path, _ = tsp(day_path)
+            final_optimized_path.append(copy.deepcopy(optimized_day_path))
+        return final_optimized_path, False
     
     # 소숫점 첫째자리가 5이상이면 +2, 아니면 +1
     max_cluster_size = place_num_avg + 2 if int(len(places_to_cluster) / len(multi_day_path) * 10) % 10 >= 5 else place_num_avg + 1
@@ -333,6 +332,9 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             
     
     # Step 3: 클러스터링 - 인접한 관광지끼리 묶음. min_cluster_size는 하루당 평균 관광지 수를 기반으로
+    clustering_ok = False
+    clustered_places = []
+    
     if essential_count_list.count(0) > 0:
         clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), place_num_avg, max_cluster_size)
         
@@ -374,19 +376,21 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             non_essential_places = [place for place in day_path if not place["is_essential"] and not place["is_accomodation"]]
             
             # 랜덤하게 비필수 장소 제거 ( 기준 변경 가능 ) + day_path가 최소 1개는 남아야 함
-            while non_essential_places and total_time > time_limit_list[day_idx] + OVER_TIME and len(day_path) >= 1:
+            # 숙소 하나만 남는 경우 제외하기
+            while non_essential_places and total_time > time_limit_list[day_idx] + OVER_TIME and len(day_path) > 1 and non_accommodation_count > 1:
                 place_to_remove = random.choice(non_essential_places)  # 랜덤 선택
                 non_essential_places.remove(place_to_remove)  # 목록에서 제거
                 day_path.remove(place_to_remove)  # 경로에서 제거
                 total_time -= place_to_remove["takenTime"]
                 total_time -= move_time  # 장소 하나 제거했으므로 이동 시간도 감소
+                non_accommodation_count = sum(1 for place in day_path if not place["is_accomodation"])
                 
                 #  TODO place_list에서 찾아서 place_score_list_not_in_path에 다시 추가
                 
-            # 최적화 후에도 시간 초과가 계속되면 원래 경로 복구
-            if total_time > time_limit_list[day_idx] + OVER_TIME:
-                logger.info(f"전체 경로 최적화 후 시간 제한 초과하여, Day {day_idx+1} 경로 원래대로 복구")
-                return multi_day_path, clustering_ok
+            # 최적화 후에도 시간 초과가 계속되면 원래 경로 복구 - 그리디에서 무조건 하나는 주게 수정하였기에, 이것도 수정 - TODO 변경 필요
+            # if total_time > time_limit_list[day_idx] + OVER_TIME:
+            #     logger.info(f"전체 경로 최적화 후 시간 제한 초과하여, Day {day_idx+1} 경로 원래대로 복구")
+            #     return multi_day_path, clustering_ok
             
             
         # 시간 부족 발생 시 처리 (초과 처리 이후 확인 - 부족보단 많은게 낫다고 판단)

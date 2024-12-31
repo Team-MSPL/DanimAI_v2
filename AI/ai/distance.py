@@ -7,6 +7,9 @@ from python_tsp.heuristics import solve_tsp_local_search
 
 def tsp(path):
     
+    if len(path) == 1:
+        return path, 0
+    
     if len(path) == 2:
         lat_diff = path[0]["lat"] - path[1]["lat"]
         lon_diff = path[0]["lng"] - path[1]["lng"]

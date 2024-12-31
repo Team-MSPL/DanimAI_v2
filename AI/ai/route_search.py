@@ -61,26 +61,44 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
         logger.info("클러스터링 잘 안된 코스들은 제거 : %s 개", str(len_path_list - len(path_list)))
     
-    # 교차하는 지점이 있는 코스 제거
-    path_list_without_intersections = remove_routes_with_intersections(path_list)
-    
-    # 해시를 사용하여 중복 제거
-    result = []
-    seen_hashes = set()
+        # 교차하는 지점이 있는 코스 제거
+        path_list_without_intersections = copy.deepcopy(remove_routes_with_intersections(path_list))
 
-    while path_list_without_intersections:
-        a = path_list_without_intersections.pop()  # 원래 경로를 pop하여 가져옴
-        
-        # 각 하루치 경로를 위도(lat) 기준으로 정렬
-        sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
-        
-        # 경로의 고유성을 해시값으로 표현하여 확인
-        a_hash = tuple(hash_day(day) for day in sorted_a)
-        
-        # 고유한 해시값이 없는 경우만 결과에 추가
-        if a_hash not in seen_hashes:
-            seen_hashes.add(a_hash)
-            result.append(copy.deepcopy(a))
+        # 해시를 사용하여 중복 제거
+        result = []
+        seen_hashes = set()
+    
+        while path_list_without_intersections:
+            a = path_list_without_intersections.pop()  # 원래 경로를 pop하여 가져옴
+            
+            # 각 하루치 경로를 위도(lat) 기준으로 정렬
+            sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
+            
+            # 경로의 고유성을 해시값으로 표현하여 확인
+            a_hash = tuple(hash_day(day) for day in sorted_a)
+            
+            # 고유한 해시값이 없는 경우만 결과에 추가
+            if a_hash not in seen_hashes:
+                seen_hashes.add(a_hash)
+                result.append(copy.deepcopy(a))
+    else:        
+        # 해시를 사용하여 중복 제거
+        result = []
+        seen_hashes = set()
+
+        while path_list:
+            a = path_list.pop()  # 원래 경로를 pop하여 가져옴
+            
+            # 각 하루치 경로를 위도(lat) 기준으로 정렬
+            sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
+            
+            # 경로의 고유성을 해시값으로 표현하여 확인
+            a_hash = tuple(hash_day(day) for day in sorted_a)
+            
+            # 고유한 해시값이 없는 경우만 결과에 추가
+            if a_hash not in seen_hashes:
+                seen_hashes.add(a_hash)
+                result.append(copy.deepcopy(a))
     
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
     # for idx_result, path_result in enumerate(result):
@@ -106,6 +124,8 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
     
     multi_day_path = []
     time_limit_final_list = []
+    enough_time_list = []
+    filtered_multi_day_path = []
     
     # 날짜별 반복
     for i in range(n_day):
@@ -134,46 +154,55 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
         #각 날짜별 시간 계산하는 부분 종료
 
-        result, enough_place, place_score_list_not_in_path = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
+        result, enough_place, place_score_list_not_in_path, enough_time = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
 
         # 각 날마다 장소 리스트를 깊은 복사: 각 날의 탐색은 독립적이어야 하므로, place_score_list_not_in_path를 각 날마다 깊은 복사해야 합니다.
         place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
         place_score_list_not_in_path = copy.deepcopy(place_score_list_not_in_path_copy)
         
+        
+        # 필터링: enough_time이 True인 경우만 필터링하여 `filtered_multi_day_path`에 추가
+        if enough_time:
+            filtered_multi_day_path.append(result)
+        
+        # 그리디 때문에 하루 path가 부족할 경우 클러스터링 쪽에서 문제 생겨서 추가 - TODO : 중간 날짜도 시간 조정이 가능해지면 로직 수정해야 함
         multi_day_path.append(copy.deepcopy(result))
+        enough_time_list.append(enough_time)
         
         if not params["enough_place"]:
             if len(multi_day_path[-1]) == 0:
                 multi_day_path.pop()
+                enough_time_list.pop()
+            if len(filtered_multi_day_path[-1]) == 0:
+                filtered_multi_day_path.pop()
             break
         
-    # 시간 제한이 너무 짧아 greedy 에서 관광지 추가 를 못한 경우 처리 - day_path 중 하나는 []
-    # 빈 배열의 위치 저장
-    empty_indices = [index for index, item in enumerate(multi_day_path) if item == []]
-
-    # 빈 배열([])을 제거한 새로운 배열 생성
-    filtered_multi_day_path = copy.deepcopy([item for item in multi_day_path if item != []])
+    # 시간 제한이 너무 짧아 greedy 에서 관광지 추가 를 못한 경우 처리 - day_path 중 하나는 [] 또는 숙소만 있을 거임
 
     if len(filtered_multi_day_path) > 0:
         filtered_multi_day_path, clustering_ok = optimize_multi_day_path(filtered_multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)
-        
-    # 나중에 빈 배열을 같은 위치에 추가
-    for index in empty_indices:
-        if index == len(multi_day_path) - 1:
-            filtered_multi_day_path.append([])
-        else:
-            filtered_multi_day_path.insert(index, [])
     
-    return multi_day_path, enough_place, clustering_ok
+    result_path = []
+    index = 0
+    
+    # 나중에 모자란 배열을 같은 위치에 추가
+    for i, enough_time in enumerate(enough_time_list):
+        if enough_time:
+            result_path.append(filtered_multi_day_path[index])
+            index += 1
+        else:
+            result_path.append(multi_day_path[i])
+    
+    return result_path, enough_place, clustering_ok
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
     
     # 남은 관광지가 없을 경우 바로 리턴
     if len(place_score_list_not_in_path) <= 0:
-        logger.info("관광지가 부족할 경우 (2) / 관광지 갯수 : ", len(place_score_list))
+        logger.info("관광지가 부족할 경우 (2) / 관광지 갯수 : " + len(place_score_list))
         params["enough_place"] = False
-        return [], params["enough_place"], place_score_list_not_in_path
+        return [], params["enough_place"], place_score_list_not_in_path, False
     
     # 코스 초안을 만드는 그리디 알고리즘 부분
     path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day)
@@ -191,13 +220,13 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     # 남은 관광지가 없을 경우 힐클라이밍 건너뛰고 tsp만하고 리턴
     if len(place_score_list_not_in_path) <= 0:
         path, _ = tsp(path)
-        return path, params["enough_place"], place_score_list_not_in_path
+        return path, params["enough_place"], place_score_list_not_in_path, False
         
     
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴 -> path = []
     elif len(place_idx_list) == 0:
         logger.info("시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴")
-        return path, enough_place, place_score_list_not_in_path
+        return path, enough_place, place_score_list_not_in_path, False
         
         
     path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))
@@ -225,4 +254,4 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     #         #place_score_list_not_in_path.append(copy.deepcopy([idx[0],idx[1],idx[2]]))
     #         #place_score_list_not_in_path.sort(key=lambda x: x[0])
 
-    return path, enough_place, place_score_list_not_in_path
+    return path, enough_place, place_score_list_not_in_path, True

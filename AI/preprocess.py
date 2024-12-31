@@ -15,6 +15,8 @@ def compare(place1, place2): # 다른 장소면  return true - 위도, 경도 �
 # 사용자가 넣은 숙소 및 필수여행지가 place_list에도 있는 것을 방지함
 def remove_duplicates(place_list, ex_list, place_feature_matrix):
     new_place_list = []
+    indices_to_remove = []  # 삭제할 인덱스를 저장
+    
     for idx, place in place_list.items():
         flag = True
         for ex in ex_list:
@@ -23,11 +25,18 @@ def remove_duplicates(place_list, ex_list, place_feature_matrix):
                 logger.info("필수여행지 및 숙소와 중복되는 장소 삭제")
                 logger.info(place["name"])
                 #del place_feature_matrix[idx]
-                place_feature_matrix = np.delete(place_feature_matrix, idx, axis=0)
+                #place_feature_matrix = np.delete(place_feature_matrix, idx, axis=0)
+                indices_to_remove.append(idx)
                 logger.info(len(place_feature_matrix))
+                break  # 중복이 확인되면 더 이상 확인하지 않음
 
         if flag:
             new_place_list.append(place)
+            
+    # place_feature_matrix에서 삭제할 인덱스 처리
+    if indices_to_remove:
+        place_feature_matrix = np.delete(place_feature_matrix, indices_to_remove, axis=0)
+
     return new_place_list, place_feature_matrix
 
 def essential_place_list_adaptor(external_place_list):
