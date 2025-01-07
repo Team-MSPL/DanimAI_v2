@@ -123,6 +123,10 @@ async def ai_run(aiModel : AIModel):
 
     end = time.time()
     logger.info(end - start)
+    if len(resultData) == 0: 
+        return {"status" : "failed",
+                "message": '코스 제작 중 에러 발생'
+        }
     return {
         "resultData" : resultData,
         "enoughPlace" : enough_place,

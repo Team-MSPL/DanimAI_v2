@@ -37,21 +37,23 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
     # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
     for t in range(RESULT_NUM):
-        
-        # 현재가 몇 번째 반복인지 반복문 안으로 넣어 줌
-        repeat_count = t
-        
-        params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit, "distance_bias": distance_bias[t], "repeat_count":repeat_count, "bandwidth":bandwidth, "enough_place":enough_place, "move_time": 60 if distance_sensitivity < 6 else 30}
-        
-        # place_score_list 미리 정렬하기
-        place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
-        
-        # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
-        # deepcopy를 이용하여 각 반복별로 이미 경로에 들어간 관광지를 따로따로 제거
-        result, enough_place, clustering_ok = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
+        try:
+            # 현재가 몇 번째 반복인지 반복문 안으로 넣어 줌
+            repeat_count = t
+            
+            params = {"n_day": n_day, "distance_sensitivity": distance_sensitivity, "transit": transit, "distance_bias": distance_bias[t], "repeat_count":repeat_count, "bandwidth":bandwidth, "enough_place":enough_place, "move_time": 60 if distance_sensitivity < 6 else 30}
+            
+            # place_score_list 미리 정렬하기
+            place_score_list[t] = sorted(place_score_list[t], key=lambda x: x[0])
+            
+            # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
+            # deepcopy를 이용하여 각 반복별로 이미 경로에 들어간 관광지를 따로따로 제거
+            result, enough_place, clustering_ok = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
 
-        path_list.append(result)
-        clustering_ok_list.append(clustering_ok)
+            path_list.append(result)
+            clustering_ok_list.append(clustering_ok)
+        except Exception as error:
+            logger.error(f"코스를 만드는 중에 에러 발생 :, {error}")
         
         
     # 클러스터링 잘 된 코스가 하나라도 있으면 안된 코스들은 제거
