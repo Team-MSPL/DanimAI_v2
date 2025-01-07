@@ -82,7 +82,7 @@ logger.info("연결 성공")
 @app.post("/ai/run")
 async def ai_run(aiModel : AIModel):
     logger.info("API 호출 성공")
-    # logger.warning('Watch out!')  # will print a message to the console
+    #logger.error('Watch out!')  # will print a message to the console
     # logger.info('I told you so')  # will not print anything
         
     ai_key_list = os.getenv('AI_KEY').split(',')
