@@ -7,7 +7,7 @@ import os
 #import traceback
 import asyncio
 from dotenv import load_dotenv
-from AI.AI_service import request_handler
+from AI.AI_service import request_handler, recommend_handler
 from .firebase.firebaseAccess import FirebaseAccess
 from concurrent.futures import ProcessPoolExecutor
 from .logging_config import logger
@@ -51,6 +51,17 @@ class AIModel(BaseModel):
     password: str
     
 
+class RecommendPlaceModel(BaseModel):
+    regionList: List[str]
+    selectList: List[List[int]]
+    transit: int
+    distanceSensitivity: int
+    lat: float
+    lng: float
+    bandwidth: bool
+    password: str
+    
+
 # async def run_blocking_io_function(args):
 #     # ProcessPoolExecutor를 사용하여 I/O 작업을 실행
 #     loop = asyncio.get_event_loop()
@@ -62,9 +73,9 @@ class AIModel(BaseModel):
 # def blocking_io_function(args):
 #     # I/O 작업 수행
 #     # 이곳에 CPU-bound 작업이나 시간이 오래 걸리는 작업을 넣으세요.
-#     place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth = args
+#     place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth = args
     
-#     resultData, bestPointList, enough_place =  asyncio.run(request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth))
+#     resultData, bestPointList, enough_place =  asyncio.run(request_handler(place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth))
     
 #     return resultData, bestPointList, enough_place
 
@@ -108,16 +119,16 @@ async def ai_run(aiModel : AIModel):
     
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
     fb = FirebaseAccess()
-    place_list, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
+    place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
     
     
     # # blocking I/O 작업을 실행
-    # args = (place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth)
+    # args = (place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth)
     # resultData, bestPointList, enough_place = await run_blocking_io_function(args)  # 비동기로 실행
 
     # request_handler가 비동기 처리되도록 함
     resultData, bestPointList, enough_place = await request_handler(
-        place_list, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
+        place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
         time_limit_array, n_day, transit, distance_sensitivity, bandwidth
     )
 
@@ -132,4 +143,46 @@ async def ai_run(aiModel : AIModel):
         "enoughPlace" : enough_place,
         "bestPointList" : bestPointList
         
+    }
+    
+    
+@app.post("/ai/recommendPlace")
+async def recommend_place(model: RecommendPlaceModel):
+    logger.info("Recommend Place API 호출 성공")
+    ai_key_list = os.getenv('AI_KEY').split(',')
+
+    # 비밀번호 유효성 검사
+    if model.password not in ai_key_list:
+        return {"status": "failed", "message": 'password error'}
+
+    start = time.time()  # 실행 시작 시간 기록
+    
+    region_list = model.regionList
+    select_list = model.selectList
+    transit = model.transit
+    distance_sensitivity = model.distanceSensitivity
+    bandwidth = model.bandwidth
+    lat = model.lat
+    lng = model.lng
+
+    # Firebase에서 장소 정보 읽기
+    fb = FirebaseAccess()
+    place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
+    
+    place_list = list(place_map.values())
+
+    # recommend_handler 호출하여 추천 결과 생성
+    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng)
+
+    end = time.time()  # 실행 종료 시간 기록
+    logger.info(end - start)
+
+    # 추천 장소가 없을 경우 실패 응답 반환
+    if len(recommended_places) == 0:
+        return {"status": "failed", "message": '추천 장소가 없습니다.'}
+
+    # 성공 응답 반환
+    return {
+        "status": "success",
+        "recommendedPlaces": recommended_places
     }

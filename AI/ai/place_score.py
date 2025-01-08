@@ -1,6 +1,8 @@
 import numpy as np
-from ..common.constant import WEIGHT, RESULT_NUM
+from ..common.constant import WEIGHT, RESULT_NUM, DISTANCE_BIAS
 from ..logging_config import logger
+import math
+
 def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list):
     try:
         weight = np.array(WEIGHT)
@@ -8,9 +10,10 @@ def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_
         weight = weight.reshape(1, RESULT_NUM, 5)
         weight = np.repeat(weight, 9, axis=0)
         weight = np.transpose(weight, (1, 2, 0))
-        distanceBias = weight * theme_matrix
-        distanceBias = np.sum(distanceBias, axis=2)
-        distanceBias = np.sum(distanceBias, axis=1)
+        distanceBias = np.array(DISTANCE_BIAS)
+        # distanceBias = weight * theme_matrix
+        # distanceBias = np.sum(distanceBias, axis=2)
+        # distanceBias = np.sum(distanceBias, axis=1)
 
         score_list = []
         preference_list = place_feature_matrix * theme_matrix
@@ -44,3 +47,13 @@ def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_
 
         
     return score_list, distanceBias
+
+
+# 하버사인 공식: 위도와 경도를 이용하여 두 지점 간의 구면 거리 계산
+def haversine_distance(lat1, lng1, lat2, lng2):
+    R = 6371  # 지구 반지름 (단위: km)
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
