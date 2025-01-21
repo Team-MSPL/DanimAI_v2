@@ -7,7 +7,7 @@ WEIGHT : Final = []
 DISTANCE_BIAS : Final = []
 for n in range(RESULT_NUM):
     #WEIGHT.append([i * (RESULT_NUM - n) for i in [40, 200, 200, 200, 20]])
-    WEIGHT.append([(((n + idx) % RESULT_NUM + 1) ** n) * item * (RESULT_NUM - n) for idx, item in enumerate([40, 200, 200, 200, 20])])
+    WEIGHT.append([(((n + idx) % RESULT_NUM + 1) ** n) * item * (RESULT_NUM - n) for idx, item in enumerate([100, 200, 200, 200, 25])])
     DISTANCE_BIAS.append(10000 * (RESULT_NUM - n))
 
 MAX_DISTANCE_SENSITIVITY :Final = 10

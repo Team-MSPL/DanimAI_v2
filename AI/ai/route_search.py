@@ -12,6 +12,8 @@ from .remove_intersections import remove_routes_with_intersections
 import traceback
 from ..logging_config import logger
 from ..common.constant import OVER_TIME, UNDER_TIME
+import traceback
+
 
 def hash_day(day):
     # 하루치 경로의 위도와 경도를 고유하게 표현하기 위해 해시값 생성
@@ -54,6 +56,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             clustering_ok_list.append(clustering_ok)
         except Exception as error:
             logger.error(f"코스를 만드는 중에 에러 발생 :, {error}")
+            logger.error(traceback.format_exc())
         
         
     # 클러스터링 잘 된 코스가 하나라도 있으면 안된 코스들은 제거
