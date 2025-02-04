@@ -102,12 +102,12 @@ def standardize(best_point_list):
             
             diff = 80 - max_tendency_point
             if diff < 0:
-                return 0          
+                diff = 0          
             
             for idx2, tendency_point in enumerate(path['tendencyPointList']):
-                # 20점 이하이면 standardize X, 위에 20점 넣은 애들도 걸러지게
+                # 20점 이하이면 0점에서 시작하여 차이 더 벌려지게
                 if path['tendencyPointList'][idx2] <= 20:
-                    continue
+                    best_point_list[idx]['tendencyPointList'][idx2] = 0
                 
                 if tendency_point == max_tendency_point:  # 보정 전 먼저 체크해야함
                     best_point_list[idx]['tendencyPointList'][idx2] += (diff // 10) * 10
@@ -126,33 +126,39 @@ def standardize(best_point_list):
     return best_point_list
 
 def getRanking(best_point_list):
-    for i in range(len(best_point_list[0]['tendencyPointList'])):
-        
-        # 각 i번째 요소에 대해 비어있지 않은 경우만 포함하는 rankList 생성 - 
-        # 성향 선택 없이 계절 값만 넣었는데, 코스 내에 계절 점수가 40점 이상인게 1개도 없을 경우
-        rankList = sorted(
-            [path for path in best_point_list if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None and len(path['tendencyPointList'][i]) > 1],
-            key=lambda x: x['tendencyPointList'][i],
-            reverse=True
-        )
-        
-        # rankList를 정렬한 순서대로 인덱스를 부여
-        for j, path in enumerate(best_point_list):
-            if 'tendencyRanking' not in path:
-                best_point_list[j]['tendencyRanking'] = []
+    try:
+        for i in range(len(best_point_list[0]['tendencyPointList'])):
             
-            # 현재 path의 i번째 값이 존재하면 랭킹을 계산하여 추가
-            if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None and len(path['tendencyPointList'][i]) > 1:
-                ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
-                best_point_list[j]['tendencyRanking'].append(ranking)
+            # 각 i번째 요소에 대해 비어있지 않은 경우만 포함하는 rankList 생성 - 
+            # 성향 선택 없이 계절 값만 넣었는데, 코스 내에 계절 점수가 40점 이상인게 1개도 없을 경우
+            rankList = sorted(
+                [path for path in best_point_list if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None and len(path['tendencyPointList']) > 1],
+                key=lambda x: x['tendencyPointList'][i],
+                reverse=True
+            )
+            
+            # rankList를 정렬한 순서대로 인덱스를 부여
+            for j, path in enumerate(best_point_list):
+                if 'tendencyRanking' not in path:
+                    best_point_list[j]['tendencyRanking'] = []
                 
-    # # 랭킹 다 매기고, 20점 짜리 애들 삭제
-    # for i, path in enumerate(best_point_list):
-    #     for j in range(len(best_point_list[i]['tendencyPointList'])):
-    #         if best_point_list[i]['tendencyPointList'][j] == 20:
-    #             del best_point_list[i]['tendencyNameList'][j]
-    #             del best_point_list[i]['tendencyPointList'][j]
-    #             del best_point_list[i]['tendencyRanking'][j]
+                # 현재 path의 i번째 값이 존재하면 랭킹을 계산하여 추가
+                if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None and len(path['tendencyPointList']) > 1:
+                    ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
+                    best_point_list[j]['tendencyRanking'].append(ranking)
+                    
+        # # 랭킹 다 매기고, 20점 짜리 애들 삭제
+        # for i, path in enumerate(best_point_list):
+        #     for j in range(len(best_point_list[i]['tendencyPointList'])):
+        #         if best_point_list[i]['tendencyPointList'][j] == 20:
+        #             del best_point_list[i]['tendencyNameList'][j]
+        #             del best_point_list[i]['tendencyPointList'][j]
+        #             del best_point_list[i]['tendencyRanking'][j]
+    except Exception as error:
+        logger.error(f"getRanking 중에 에러 발생 :, {error}")  
+        logger.error(traceback.format_exc())
+        logger.error(f"best_point_list : {best_point_list}")  
+        return best_point_list
 
     return best_point_list
 
