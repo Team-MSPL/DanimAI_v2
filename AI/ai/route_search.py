@@ -64,7 +64,8 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         len_path_list = len(path_list)
         path_list = [path for idx, path in enumerate(path_list) if clustering_ok_list[idx]]
 
-        logger.info("클러스터링 잘 안된 코스들은 제거 : %s 개", str(len_path_list - len(path_list)))
+        logger.info(f"클러스터링 잘 안된 코스들은 제거, 갯수 : {len_path_list - len(path_list)}")
+
     
         # 교차하는 지점이 있는 코스 제거
         path_list_without_intersections = copy.deepcopy(remove_routes_with_intersections(path_list))
@@ -205,7 +206,8 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     
     # 남은 관광지가 없을 경우 바로 리턴
     if len(place_score_list_not_in_path) <= 0:
-        logger.info("관광지가 부족할 경우 (2) / 관광지 갯수 : " + len(place_score_list))
+        logger.info(f"관광지가 부족할 경우 (2) / 관광지 갯수 : {len(place_score_list)}")
+
         params["enough_place"] = False
         return [], params["enough_place"], place_score_list_not_in_path, False
     

@@ -55,6 +55,9 @@ def tendencyCalculate(path_list, select_list):
                     
         pathTendencyAvg = multiply_2d_arrays(pathTendencyAvg, select_list)
         
+        if placeNum == 0:    # 전부 필수여행지랑 숙소인경우
+            best_point_list.append({ "tendencyNameList": [], "tendencyPointList": [], "tendencyRanking": []})           
+        
         pathTendencyAvg = [[x // placeNum for x in row] for row in pathTendencyAvg]
         
         tendencyPointList = []
@@ -106,7 +109,7 @@ def getRanking(best_point_list):
         # 각 i번째 요소에 대해 비어있지 않은 경우만 포함하는 rankList 생성 - 
         # 성향 선택 없이 계절 값만 넣었는데, 코스 내에 계절 점수가 40점 이상인게 1개도 없을 경우
         rankList = sorted(
-            [path for path in best_point_list if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None],
+            [path for path in best_point_list if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None and len(path['tendencyPointList'][i]) > 1],
             key=lambda x: x['tendencyPointList'][i],
             reverse=True
         )
@@ -117,7 +120,7 @@ def getRanking(best_point_list):
                 best_point_list[j]['tendencyRanking'] = []
             
             # 현재 path의 i번째 값이 존재하면 랭킹을 계산하여 추가
-            if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None:
+            if i < len(path['tendencyPointList']) and path['tendencyPointList'][i] is not None and len(path['tendencyPointList'][i]) > 1:
                 ranking = next(idx + 1 for idx, item in enumerate(rankList) if item == path)
                 best_point_list[j]['tendencyRanking'].append(ranking)
                 

@@ -58,7 +58,7 @@ def initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, e
         
         # 관광지가 부족할 경우 (1)
         if len(place_score_list_not_in_path) < 0:        
-            logger.info("관광지가 부족할 경우 (1) / 관광지 갯수 : " + len(place_score_list_not_in_path))
+            logger.info(f"관광지가 부족할 경우 (1) / 관광지 갯수 : {len(place_score_list_not_in_path)}")
             params["enough_place"] = False
             break
         

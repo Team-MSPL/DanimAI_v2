@@ -27,218 +27,219 @@ def check_enough_place(day_path, day_idx, move_time, time_limit_list, len_place_
         return False
 
 def fill_time_loss(day_idx, day_path, final_optimized_path, time_limit_list, move_time, place_list, place_score_list_not_in_path):
-    
-    # 당일치기인 경우
-    if len(time_limit_list) == 1:
-        # 당일치기 + 관광지 2개 이상
-        if len(day_path) >= 2:
-            place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}
-            place2 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
-            
-            popper = len(place_score_list_not_in_path) - 1
-            for i in range(len(place_score_list_not_in_path)):
-                score_idx_name = place_score_list_not_in_path[popper]
-                search_place = place_list[score_idx_name[1]]
+    try:
+        # 당일치기인 경우
+        if len(time_limit_list) == 1:
+            # 당일치기 + 관광지 2개 이상
+            if len(day_path) >= 2:
+                place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}
+                place2 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
                 
-                if is_within_range(place1,place2,search_place):
+                popper = len(place_score_list_not_in_path) - 1
+                for i in range(len(place_score_list_not_in_path)):
+                    score_idx_name = place_score_list_not_in_path[popper]
+                    search_place = place_list[score_idx_name[1]]
                     
-                    add_place = copy.deepcopy(search_place)
+                    if is_within_range(place1,place2,search_place):
+                        
+                        add_place = copy.deepcopy(search_place)
+                        
+                        day_path.insert(-1, add_place)
+                        
+                        del place_score_list_not_in_path[popper]
+                        
+                        logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - 당일치기 - %s", add_place["name"])
+                        
+                        if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
+                            return day_path
+                        
+                    popper -= 1
+                
+            # 당일치기 + 관광지 1개 이하 + 2개 이상인데, 위에서 충분히 못 채운 경우
+            #central_point = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}
+            # 중간값 계산
+            median_index = len(place_score_list_not_in_path) // 2
+            total_time = sum(place["takenTime"] for place in day_path)
+            total_time += move_time * (len(day_path) - 1)
+                
+            for index, score_index_name in enumerate(place_score_list_not_in_path):
+                if index >= median_index and place_list[score_index_name[1]]["takenTime"] <= total_time - (time_limit_list[day_idx] - UNDER_TIME):
                     
-                    day_path.insert(-1, add_place)
+                    add_place = copy.deepcopy(place_list[score_index_name[1]])
                     
-                    del place_score_list_not_in_path[popper]
-                    
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - 당일치기 - %s", add_place["name"])
-                    
+                    day_path.append(add_place)
+                        
+                    del place_score_list_not_in_path[index]
+                        
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - 당일치기 2 - %s", add_place["name"])
+                        
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
-                    
-                popper -= 1
             
-        # 당일치기 + 관광지 1개 이하 + 2개 이상인데, 위에서 충분히 못 채운 경우
-        #central_point = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}
-        # 중간값 계산
-        median_index = len(place_score_list_not_in_path) // 2
-        total_time = sum(place["takenTime"] for place in day_path)
-        total_time += move_time * (len(day_path) - 1)
+        # 1박 2일 이상
+        else:
+            # 위도와 경도를 범위로 동선 안해치는 관광지를 추가 ( 점수 높은 순서대로 고려 )
+            # 마지막날이 아니면 다음날 첫 여행지를 기준으로
+            if day_idx != len(final_optimized_path) - 1:
+                place1 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
+                place2 = {"lat":final_optimized_path[day_idx + 1][0]["lat"], "lng":final_optimized_path[day_idx + 1][0]["lng"]}
+                # 이날 마지막 여행지가 숙소라면 숙소와의 비교
+                if day_path[-1]["is_accomodation"]:
+                    place2 = {"lat":day_path[-2]["lat"], "lng":day_path[-2]["lng"]}
+                
+                popper = len(place_score_list_not_in_path) - 1
+                for i in range(len(place_score_list_not_in_path)):
+                    score_idx_name = place_score_list_not_in_path[popper]
+                    search_place = place_list[score_idx_name[1]]
+                    
+                    if is_within_range(place1,place2,search_place):
+                        
+                        add_place = copy.deepcopy(search_place)
+                        
+                        if day_path[-1]["is_accomodation"]:
+                            day_path.insert(-1, add_place)
+                        else:
+                            day_path.append(add_place)
+                        
+                        del place_score_list_not_in_path[popper]
+                        
+                        logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
+                        
+                        if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
+                            return day_path
+                        
+                    popper -= 1
+                    
+            # 첫날이 아니면 전날 마지막 여행지를 기준으로
+            if day_idx != 0:
+                place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}          
+                place2 = {"lat":final_optimized_path[day_idx-1][-1]["lat"], "lng":final_optimized_path[day_idx-1][-1]["lng"]}
+                # 이날 첫 여행지가 숙소라면, 숙소와 비교
+                if day_path[0]["is_accomodation"] and len(day_path) > 1:
+                    place2 = {"lat":day_path[1]["lat"], "lng":day_path[1]["lng"]}    
+                
+                popper = len(place_score_list_not_in_path) - 1
+                for i in range(len(place_score_list_not_in_path)):
+                    score_idx_name = place_score_list_not_in_path[popper]
+                    search_place = place_list[score_idx_name[1]]
+                    
+                    if is_within_range(place1,place2,search_place):
+                        
+                        add_place = copy.deepcopy(search_place)
+                        
+                        if day_path[0]["is_accomodation"]:
+                            day_path.insert(1, add_place)
+                        else:
+                            day_path.insert(0, add_place)
+                            
+                        del place_score_list_not_in_path[popper]
+                        
+                        logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v2 - %s", add_place["name"])
+                        
+                        if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
+                            return day_path
+                        
+                    popper -= 1
+                    
             
-        for index, score_index_name in enumerate(place_score_list_not_in_path):
-            if index >= median_index and place_list[score_index_name[1]]["takenTime"] <= total_time - (time_limit_list[day_idx] - UNDER_TIME):
+            # 위도와 경도 범위 안에 아무것도 없을 경우 - 이후로는 중점 좌표 기준으로 채우기
+            # 거리가 가까운 순으로 보되 ( place1, place2 사이의 거리보다는 짧아야함. - 원 범위 ), 점수가 남은 장소 점수들의 중간값보다는 높아야 함
+            # 마지막날이 아니면 다음날 첫 여행지를 기준으로
+            if day_idx != len(final_optimized_path) - 1:
+                place1 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
+                place2 = {"lat":final_optimized_path[day_idx + 1][0]["lat"], "lng":final_optimized_path[day_idx + 1][0]["lng"]}
+                # 이날 마지막 여행지가 숙소라면 숙소와의 비교
+                if day_path[-1]["is_accomodation"]:
+                    place2 = {"lat":day_path[-2]["lat"], "lng":day_path[-2]["lng"]}
+                    
+                central_point = {"lat":(place1["lat"] + place2["lat"]) / 2, "lng":(place1["lng"] + place2["lng"]) / 2}
                 
-                add_place = copy.deepcopy(place_list[score_index_name[1]])
-                
-                day_path.append(add_place)
-                    
-                del place_score_list_not_in_path[index]
-                    
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - 당일치기 2 - %s", add_place["name"])
-                    
-                if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
-                    return day_path
-        
-    # 1박 2일 이상
-    else:
-        # 위도와 경도를 범위로 동선 안해치는 관광지를 추가 ( 점수 높은 순서대로 고려 )
-        # 마지막날이 아니면 다음날 첫 여행지를 기준으로
-        if day_idx != len(final_optimized_path) - 1:
-            place1 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
-            place2 = {"lat":final_optimized_path[day_idx + 1][0]["lat"], "lng":final_optimized_path[day_idx + 1][0]["lng"]}
-            # 이날 마지막 여행지가 숙소라면 숙소와의 비교
-            if day_path[-1]["is_accomodation"]:
-                place2 = {"lat":day_path[-2]["lat"], "lng":day_path[-2]["lng"]}
+                # 중간값 계산
+                median_index = len(place_score_list_not_in_path) // 2
             
-            popper = len(place_score_list_not_in_path) - 1
-            for i in range(len(place_score_list_not_in_path)):
-                score_idx_name = place_score_list_not_in_path[popper]
-                search_place = place_list[score_idx_name[1]]
+                # place1과 place2 사이의 거리 계산
+                max_distance_square = (place1["lat"] - place2["lat"])**2 + (place1["lng"] - place2["lng"])**2
                 
-                if is_within_range(place1,place2,search_place):
+                # 중간값 이상의 장소 필터링
+                filtered_places = []
+                for score, index, name in place_score_list_not_in_path:
+                    if index >= median_index:
+                        place = place_list[index]
+                        distance_to_central_square = (central_point["lat"] - place["lat"])**2 + (central_point["lng"] - place["lng"])**2
+                        
+                        # 중앙점과의 거리가 place1, place2 사이 거리보다 짧을 때만 추가 - 이거보다 멀리 있으면 추가 안하는게 보기 더 좋을 듯
+                        if distance_to_central_square <= max_distance_square:
+                            filtered_places.append((distance_to_central_square, place))
+            
+                # 거리 기준으로 정렬
+                closest_places = sorted(filtered_places, key=lambda x: x[0])
+                closest_places = [place for _, place in closest_places]
+                
+                for item in closest_places:
                     
-                    add_place = copy.deepcopy(search_place)
+                    add_place = copy.deepcopy(item)
                     
                     if day_path[-1]["is_accomodation"]:
                         day_path.insert(-1, add_place)
                     else:
                         day_path.append(add_place)
                     
-                    del place_score_list_not_in_path[popper]
+                    place_score_list_not_in_path = [element for element in place_score_list_not_in_path if element[2] != add_place["name"]]
                     
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 - %s", add_place["name"])
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v3 - %s", add_place["name"])
                     
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
-                    
-                popper -= 1
-                
-        # 첫날이 아니면 전날 마지막 여행지를 기준으로
-        if day_idx != 0:
-            place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}          
-            place2 = {"lat":final_optimized_path[day_idx-1][-1]["lat"], "lng":final_optimized_path[day_idx-1][-1]["lng"]}
-            # 이날 첫 여행지가 숙소라면, 숙소와 비교
-            if day_path[0]["is_accomodation"]:
-                place2 = {"lat":day_path[1]["lat"], "lng":day_path[1]["lng"]}    
             
-            popper = len(place_score_list_not_in_path) - 1
-            for i in range(len(place_score_list_not_in_path)):
-                score_idx_name = place_score_list_not_in_path[popper]
-                search_place = place_list[score_idx_name[1]]
-                
-                if is_within_range(place1,place2,search_place):
+            
+            # 첫날이 아니면 전날 마지막 여행지를 기준으로
+            if day_idx != 0:
+                place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}          
+                place2 = {"lat":final_optimized_path[day_idx-1][-1]["lat"], "lng":final_optimized_path[day_idx-1][-1]["lng"]}
+                # 이날 첫 여행지가 숙소라면, 숙소와 비교
+                if day_path[0]["is_accomodation"]:
+                    place2 = {"lat":day_path[1]["lat"], "lng":day_path[1]["lng"]} 
                     
-                    add_place = copy.deepcopy(search_place)
+                central_point = {"lat":(place1["lat"] + place2["lat"]) / 2, "lng":(place1["lng"] + place2["lng"]) / 2}
+                
+                # 중간값 계산
+                median_index = len(place_score_list_not_in_path) // 2
+            
+                # place1과 place2 사이의 거리 계산
+                max_distance_square = (place1["lat"] - place2["lat"])**2 + (place1["lng"] - place2["lng"])**2
+                
+                # 중간값 이상의 장소 필터링
+                filtered_places = []
+                for score, index, name in place_score_list_not_in_path:
+                    if index >= median_index:
+                        place = place_list[index]
+                        distance_to_central_square = (central_point["lat"] - place["lat"])**2 + (central_point["lng"] - place["lng"])**2
+                        
+                        # 중앙점과의 거리가 place1, place2 사이 거리보다 짧을 때만 추가 - 이거보다 멀리 있으면 추가 안하는게 보기 더 좋을 듯
+                        if distance_to_central_square <= max_distance_square:
+                            filtered_places.append((distance_to_central_square, place))
+            
+                # 거리 기준으로 정렬
+                closest_places = sorted(filtered_places, key=lambda x: x[0])
+                closest_places = [place for _, place in closest_places]
+                
+                for item in closest_places:
+                    
+                    add_place = copy.deepcopy(item)
                     
                     if day_path[0]["is_accomodation"]:
                         day_path.insert(1, add_place)
                     else:
                         day_path.insert(0, add_place)
                         
-                    del place_score_list_not_in_path[popper]
+                    place_score_list_not_in_path = [element for element in place_score_list_not_in_path if element[2] != add_place["name"]]
                     
-                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v2 - %s", add_place["name"])
+                    logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v4 - %s", add_place["name"])
                     
                     if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
                         return day_path
-                    
-                popper -= 1
-                
-        
-        # 위도와 경도 범위 안에 아무것도 없을 경우 - 이후로는 중점 좌표 기준으로 채우기
-        # 거리가 가까운 순으로 보되 ( place1, place2 사이의 거리보다는 짧아야함. - 원 범위 ), 점수가 남은 장소 점수들의 중간값보다는 높아야 함
-        # 마지막날이 아니면 다음날 첫 여행지를 기준으로
-        if day_idx != len(final_optimized_path) - 1:
-            place1 = {"lat":day_path[-1]["lat"], "lng":day_path[-1]["lng"]}
-            place2 = {"lat":final_optimized_path[day_idx + 1][0]["lat"], "lng":final_optimized_path[day_idx + 1][0]["lng"]}
-            # 이날 마지막 여행지가 숙소라면 숙소와의 비교
-            if day_path[-1]["is_accomodation"]:
-                place2 = {"lat":day_path[-2]["lat"], "lng":day_path[-2]["lng"]}
-                
-            central_point = {"lat":(place1["lat"] + place2["lat"]) / 2, "lng":(place1["lng"] + place2["lng"]) / 2}
-            
-            # 중간값 계산
-            median_index = len(place_score_list_not_in_path) // 2
-        
-            # place1과 place2 사이의 거리 계산
-            max_distance_square = (place1["lat"] - place2["lat"])**2 + (place1["lng"] - place2["lng"])**2
-            
-            # 중간값 이상의 장소 필터링
-            filtered_places = []
-            for score, index, name in place_score_list_not_in_path:
-                if index >= median_index:
-                    place = place_list[index]
-                    distance_to_central_square = (central_point["lat"] - place["lat"])**2 + (central_point["lng"] - place["lng"])**2
-                    
-                    # 중앙점과의 거리가 place1, place2 사이 거리보다 짧을 때만 추가 - 이거보다 멀리 있으면 추가 안하는게 보기 더 좋을 듯
-                    if distance_to_central_square <= max_distance_square:
-                        filtered_places.append((distance_to_central_square, place))
-        
-            # 거리 기준으로 정렬
-            closest_places = sorted(filtered_places, key=lambda x: x[0])
-            closest_places = [place for _, place in closest_places]
-            
-            for item in closest_places:
-                
-                add_place = copy.deepcopy(item)
-                
-                if day_path[-1]["is_accomodation"]:
-                    day_path.insert(-1, add_place)
-                else:
-                    day_path.append(add_place)
-                
-                place_score_list_not_in_path = [element for element in place_score_list_not_in_path if element[2] != add_place["name"]]
-                
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v3 - %s", add_place["name"])
-                
-                if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
-                    return day_path
-        
-        
-        # 첫날이 아니면 전날 마지막 여행지를 기준으로
-        if day_idx != 0:
-            place1 = {"lat":day_path[0]["lat"], "lng":day_path[0]["lng"]}          
-            place2 = {"lat":final_optimized_path[day_idx-1][-1]["lat"], "lng":final_optimized_path[day_idx-1][-1]["lng"]}
-            # 이날 첫 여행지가 숙소라면, 숙소와 비교
-            if day_path[0]["is_accomodation"]:
-                place2 = {"lat":day_path[1]["lat"], "lng":day_path[1]["lng"]} 
-                
-            central_point = {"lat":(place1["lat"] + place2["lat"]) / 2, "lng":(place1["lng"] + place2["lng"]) / 2}
-            
-            # 중간값 계산
-            median_index = len(place_score_list_not_in_path) // 2
-        
-            # place1과 place2 사이의 거리 계산
-            max_distance_square = (place1["lat"] - place2["lat"])**2 + (place1["lng"] - place2["lng"])**2
-            
-            # 중간값 이상의 장소 필터링
-            filtered_places = []
-            for score, index, name in place_score_list_not_in_path:
-                if index >= median_index:
-                    place = place_list[index]
-                    distance_to_central_square = (central_point["lat"] - place["lat"])**2 + (central_point["lng"] - place["lng"])**2
-                    
-                    # 중앙점과의 거리가 place1, place2 사이 거리보다 짧을 때만 추가 - 이거보다 멀리 있으면 추가 안하는게 보기 더 좋을 듯
-                    if distance_to_central_square <= max_distance_square:
-                        filtered_places.append((distance_to_central_square, place))
-        
-            # 거리 기준으로 정렬
-            closest_places = sorted(filtered_places, key=lambda x: x[0])
-            closest_places = [place for _, place in closest_places]
-            
-            for item in closest_places:
-                
-                add_place = copy.deepcopy(item)
-                
-                if day_path[0]["is_accomodation"]:
-                    day_path.insert(1, add_place)
-                else:
-                    day_path.insert(0, add_place)
-                    
-                place_score_list_not_in_path = [element for element in place_score_list_not_in_path if element[2] != add_place["name"]]
-                
-                logger.info("전체 경로 최적화 후 시간 제한 미달하여 관광지 추가 v4 - %s", add_place["name"])
-                
-                if check_enough_place(day_path, day_idx, move_time, time_limit_list, len(place_score_list_not_in_path)):
-                    return day_path
-                    
+    except Exception as error:
+        logger.error(f"fill_time_loss 중에 에러 발생 :, {error}")  
     return day_path
 
     
@@ -351,10 +352,17 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 new_day_path.append(copy.deepcopy(day_path[0]))
                 
             #클러스터를 new_day_path에 추가
-            new_day_path.extend(copy.deepcopy(clustered_places.pop(0)))
+            add_place_list = copy.deepcopy(clustered_places.pop(0))
+            
+            # 예외 처리 - 그대로 리턴
+            if add_place_list is None or len(add_place_list):
+                return multi_day_path, False
+            
+            new_day_path.extend(add_place_list)
                         
             if day_path[-1]["is_accomodation"]:
                 new_day_path.append(copy.deepcopy(day_path[-1]))
+                
             
             optimized_new_day_path, _ = tsp(new_day_path)
             

@@ -118,6 +118,7 @@ async def ai_run(aiModel : AIModel):
     
     
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
+    logger.info(f"API 호출 지역 - {region_list}")
     fb = FirebaseAccess()
     place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
     
@@ -166,6 +167,7 @@ async def recommend_place(model: RecommendPlaceModel):
     lng = model.lng
 
     # Firebase에서 장소 정보 읽기
+    logger.info(f"Recommend Place API 호출 지역 - {region_list}")
     fb = FirebaseAccess()
     place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
     

@@ -6,6 +6,8 @@ from ..logging_config import logger
 from python_tsp.heuristics import solve_tsp_local_search
 
 def tsp(path):
+    if len(path) == 0:
+        logger.error(f"tsp에서 path가 0임 - 상황 체크 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
     
     if len(path) == 1:
         return path, 0
@@ -129,42 +131,6 @@ def tsp_common(path):
     
     
     return ts_path, distance
-    
-    # # tsp 라이브러리 실행
-    # permutation, distance = solve_tsp_local_search(distance_matrix)
-    
-    # #tsp는 원점 회귀 이기 때문에, 마지막 노드에서 첫 노드로 돌아오는 거리는 빼 줘야 함
-    # start = permutation[0]
-    # end = permutation[-1]
-    # lat_diff = path[start]["lat"] - path[end]["lat"]
-    # lon_diff = path[start]["lng"] - path[end]["lng"]
-    # distance -= math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
-    
-    # # 최종 경로를 permutation 순서에 맞게 재구성
-    # ts_path = [path[i] for i in permutation]
-    
-    # # 첫 노드와 두 번째 노드, 첫 노드와 마지막 노드 간 거리 비교
-    # start = permutation[0]
-    # second = permutation[1]
-    # end = permutation[-1]
-    
-    # dist_start_to_second = distance_matrix[start][second]
-    # dist_start_to_end = distance_matrix[start][end]
-    
-    # # tsp는 원점 회귀 이기 때문에, 마지막 노드에서 첫 노드로 돌아오는 거리는 빼 줘야 함
-    # # 첫 관광지에서 두 번째 관광지로의 거리 > 첫 관광지에서 마지막 관광지로의 거리인 경우 역순 경로 생성
-    # # 1-2-3-4 에서 1-2간 거리 > 1-4간 거리 => 1-4-3-2가 더 빠름
-    # if dist_start_to_second > dist_start_to_end:
-    #     reversed_part = list(reversed(ts_path[1:]))  # 첫 장소를 제외하고 역순으로
-    #     ts_path = [ts_path[0]] + reversed_part  # 첫 장소를 고정
-    #     # 거리 재계산
-    #     distance = 0
-    #     for i in range(len(ts_path) - 1):
-    #         current_index = path.index(ts_path[i])
-    #         next_index = path.index(ts_path[i + 1])
-    #         distance += distance_matrix[current_index][next_index]
-            
-    # return ts_path, distance
 
 # 맨 앞 or 맨 뒤에 숙소가 있는 경우 처리 ( 한쪽만 )
 def tsp_fixed_accomodation(path):
@@ -219,7 +185,8 @@ def tsp_fixed_accomodation(path):
     # 여러번 시도해보았으나, start 숙소는 고정 잘 되는 듯, 아직 테스트 단계라 냅둠
     elif start_accommodation is not None and permutation[0] != 0:
         new_permutation = permutation[permutation.index(0):] + permutation[:permutation.index(0)]
-        logger.info("tsp에서 start 숙소의 위치가 바뀜", permutation, new_permutation)
+        logger.info(f"tsp에서 start 숙소의 위치가 바뀜 : {permutation} / {new_permutation}")
+
         permutation = new_permutation
         
         
