@@ -21,11 +21,11 @@ def multiply_2d_arrays(arr1, arr2):
 
 def tendencyCalculate(path_list, select_list):
     tendencyAvg = [
-            [0, 0, 0, 0, 0, 0, -1000], #반려동물과는 나오면 안됨
+            [0, 0, 0, 0, 0, 0, 0], #반려동물과는 나오면 안됨 - 250204 수정
             [0, 0, 0, 0, 0, 0], #
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, -1000, 0, 0], #실내여행지는 나오면 안됨
-            [-100, -100, -100, -100],  #계절 점수는 지양
+            [0, 0, 0, 0, 0, 0, 0, 0], #실내여행지는 나오면 안됨 - 250204 수정
+            [0, 0, 0, 0],  #계절 점수는 지양 - 250204 수정
     ]
     tendencyData = [
             ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
@@ -66,12 +66,16 @@ def tendencyCalculate(path_list, select_list):
         for i, tendency in enumerate(pathTendencyAvg):
             for j,  score in enumerate(tendency):
                 if score > 0:
-                    tendencyPointList.append(score)
-                    tendencyNameList.append(tendencyData[i][j])
-                elif select_list[i][j] > 0 and i != 4:
-                    # 20점 넣고 랭킹에 제대로 뜨게 하자 + 계절 제외
-                    tendencyPointList.append(20)
-                    tendencyNameList.append(tendencyData[i][j])
+                    if select_list[i][j] > 0 and i == 4:
+                        tendencyPointList.append(score - 20)    # 계절 값만 -20 해주자
+                        tendencyNameList.append(tendencyData[i][j])
+                    else:
+                        tendencyPointList.append(score)
+                        tendencyNameList.append(tendencyData[i][j])
+                # elif select_list[i][j] > 0 and i != 4:
+                #     # 20점 넣고 랭킹에 제대로 뜨게 하자 + 계절 제외
+                #     tendencyPointList.append(20)
+                #     tendencyNameList.append(tendencyData[i][j])
                     
 
         best_point_list.append({'tendencyNameList': tendencyNameList, 'tendencyPointList': tendencyPointList})
@@ -79,28 +83,46 @@ def tendencyCalculate(path_list, select_list):
     return best_point_list
 
 def standardize(best_point_list):
-    def calculate_correction(diff):
-        return (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10
+    # def calculate_correction(diff):
+    #     return (diff // 10 - 2.5) * 10 if diff % 10 == 0 else (diff // 10 - 1.5) * 10
 
-    isEnough = [False] * RESULT_NUM
+    # isEnough = [False] * RESULT_NUM
+    try:
+        max_tendency_point_list = [
+            max(path['tendencyPointList']) if path['tendencyPointList'] else 0
+            for path in best_point_list
+        ]
 
-    for idx, path in enumerate(best_point_list):
-        isEnough[idx] = any(tendencyPoint > 80 for tendencyPoint in path['tendencyPointList'])
 
-        if not isEnough[idx]:
-            for idx2, _ in enumerate(path['tendencyPointList']):
+        for idx, path in enumerate(best_point_list):
+            # 80점 넘는 성향이 있어도 나머지 애들은 보정하게 수정 - 250204
+            # isEnough[idx] = any(tendencyPoint >= 80 for tendencyPoint in path['tendencyPointList'])
+            
+            max_tendency_point = max_tendency_point_list[idx]
+            
+            diff = 80 - max_tendency_point
+            if diff < 0:
+                return 0          
+            
+            for idx2, tendency_point in enumerate(path['tendencyPointList']):
                 # 20점 이하이면 standardize X, 위에 20점 넣은 애들도 걸러지게
                 if path['tendencyPointList'][idx2] <= 20:
                     continue
                 
-                diff = 100 - path['tendencyPointList'][idx2]
-                correction = calculate_correction(diff)
-                best_point_list[idx]['tendencyPointList'][idx2] += correction
-
-                if correction > 40:
-                    best_point_list[idx]['tendencyPointList'][idx2] -= 10
-
-
+                if tendency_point == max_tendency_point:  # 보정 전 먼저 체크해야함
+                    best_point_list[idx]['tendencyPointList'][idx2] += (diff // 10) * 10
+                    
+                else:
+                    # 차이를 줄이기 위한 비율 계산 - 50% 차이를 줄이도록 설정
+                    best_point_list[idx]['tendencyPointList'][idx2] += int((max_tendency_point - tendency_point) * 0.5)
+                    
+                    # 차이 보정 이후에 80점과 보정 작업
+                    best_point_list[idx]['tendencyPointList'][idx2] += (diff // 10) * 10
+                
+    except Exception as error:
+        logger.error(f"standardize 중에 에러 발생 :, {error}")  
+        return best_point_list
+        
     return best_point_list
 
 def getRanking(best_point_list):
