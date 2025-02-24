@@ -56,7 +56,8 @@ def tendencyCalculate(path_list, select_list):
         pathTendencyAvg = multiply_2d_arrays(pathTendencyAvg, select_list)
         
         if placeNum == 0:    # 전부 필수여행지랑 숙소인경우
-            best_point_list.append({ "tendencyNameList": [], "tendencyPointList": [], "tendencyRanking": []})           
+            best_point_list.append({ "tendencyNameList": [], "tendencyPointList": [], "tendencyRanking": []})    
+            return best_point_list       
         
         pathTendencyAvg = [[x // placeNum for x in row] for row in pathTendencyAvg]
         

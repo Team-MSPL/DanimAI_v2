@@ -363,8 +363,10 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             if day_path[-1]["is_accomodation"]:
                 new_day_path.append(copy.deepcopy(day_path[-1]))
                 
-            
-            optimized_new_day_path, _ = tsp(new_day_path)
+            if len(new_day_path) > 0:
+                optimized_new_day_path, _ = tsp(new_day_path)
+            else:
+                optimized_new_day_path = new_day_path
             
             final_optimized_path.append(optimized_new_day_path)
         
