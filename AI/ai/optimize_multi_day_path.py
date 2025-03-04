@@ -297,21 +297,22 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             essential_coordinates = np.array([[place['lat'], place['lng']] for place in essential_places])
             essential_center = np.mean(essential_coordinates, axis=0)
 
-            # places_to_cluster 내 장소들과의 거리 계산
-            distances = cdist([essential_center], [[place['lat'], place['lng']] for place in places_to_cluster])
-            
-            # 가까운 장소부터 place_num_avg 수 만큼 추가
-            sorted_indices = np.argsort(distances[0])
             places_to_add = []            
-            
-            for i in sorted_indices[:place_num_avg - len(essential_places_without_accomodation)]:
-                place_to_add = places_to_cluster[i]
-                places_to_add.append(copy.deepcopy(place_to_add))
-            
-            for i, item in enumerate(places_to_add):
-                # 추가한 장소는 places_to_cluster에서 제거
-                if item in places_to_cluster:
-                    places_to_cluster.remove(item)
+            if len(places_to_cluster) > 0:
+                # places_to_cluster 내 장소들과의 거리 계산
+                distances = cdist([essential_center], [[place['lat'], place['lng']] for place in places_to_cluster])
+                
+                # 가까운 장소부터 place_num_avg 수 만큼 추가
+                sorted_indices = np.argsort(distances[0])
+                
+                for i in sorted_indices[:place_num_avg - len(essential_places_without_accomodation)]:
+                    place_to_add = places_to_cluster[i]
+                    places_to_add.append(copy.deepcopy(place_to_add))
+                
+                for i, item in enumerate(places_to_add):
+                    # 추가한 장소는 places_to_cluster에서 제거
+                    if item in places_to_cluster:
+                        places_to_cluster.remove(item)
                     
             # 하루치 코스 구성
             new_day_path = []
