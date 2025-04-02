@@ -11,6 +11,7 @@ from AI.AI_service import request_handler, recommend_handler
 from .firebase.firebaseAccess import FirebaseAccess
 from concurrent.futures import ProcessPoolExecutor
 from .logging_config import logger
+from .remake_tendency import remakeTendency
 
 # 숙소 및 필수여행지 input값을 추가하고자 할 때 여기 수정
 class AccomodationListItem(BaseModel):
@@ -49,6 +50,7 @@ class AIModel(BaseModel):
     distanceSensitivity: int
     bandwidth: bool
     password: str
+    version: int = 1  # 기본값 설정
     
 
 class RecommendPlaceModel(BaseModel):
@@ -60,6 +62,7 @@ class RecommendPlaceModel(BaseModel):
     lng: float
     bandwidth: bool
     password: str
+    version: int = 1  # 기본값 설정
     
 
 # async def run_blocking_io_function(args):
@@ -114,13 +117,16 @@ async def ai_run(aiModel : AIModel):
     transit = aiModel.transit
     distance_sensitivity = aiModel.distanceSensitivity
     bandwidth = aiModel.bandwidth
+    version = aiModel.version
     
-    
+    if version == 3:
+        select_list = remakeTendency(select_list)
     
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
+    logger.info(f"version - {version}")
     logger.info(f"API 호출 지역 - {region_list}")
     fb = FirebaseAccess()
-    place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
+    place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth, version)
     
     
     # # blocking I/O 작업을 실행
@@ -130,7 +136,7 @@ async def ai_run(aiModel : AIModel):
     # request_handler가 비동기 처리되도록 함
     resultData, bestPointList, enough_place = await request_handler(
         place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
-        time_limit_array, n_day, transit, distance_sensitivity, bandwidth
+        time_limit_array, n_day, transit, distance_sensitivity, bandwidth, version
     )
 
     end = time.time()
@@ -165,16 +171,21 @@ async def recommend_place(model: RecommendPlaceModel):
     bandwidth = model.bandwidth
     lat = model.lat
     lng = model.lng
+    version = model.version
 
+    if version == 3:
+        select_list = remakeTendency(select_list)
+    
     # Firebase에서 장소 정보 읽기
+    logger.info(f"version - {version}")
     logger.info(f"Recommend Place API 호출 지역 - {region_list}")
     fb = FirebaseAccess()
-    place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth)
+    place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth, version)
     
     place_list = list(place_map.values())
 
     # recommend_handler 호출하여 추천 결과 생성
-    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng)
+    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version)
 
     end = time.time()  # 실행 종료 시간 기록
     logger.info(end - start)

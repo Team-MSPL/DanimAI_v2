@@ -5,6 +5,7 @@ import os
 import numpy as np
 import copy
 from ..logging_config import logger
+from ..remake_tendency import remakeTendency
 
 from google.cloud.firestore_v1 import FieldFilter
 
@@ -35,7 +36,7 @@ class FirebaseAccess():
 
         self.db = firestore.client()  # 파이어스토어 접근
 
-    async def read_all_place(self, region, select_list, bandwidth):
+    async def read_all_place(self, region, select_list, bandwidth, version):
         db = self.db
         all_place_map = {}
         place_feature = []
@@ -82,9 +83,6 @@ class FirebaseAccess():
                         "is_accomodation": False,
                         "is_dummy": False
                     }
-                    
-                    
-
                     # id 키가 있으면 제거
                     place.pop("id", None)  # 'None'은 'id'가 없을 경우 KeyError를 방지
                     
@@ -95,6 +93,26 @@ class FirebaseAccess():
                         data["tour"] + [0],
                         data["season"] + [0, 0, 0, 0, 0]
                     ]], dtype=int)
+                    
+                    
+                    if version == 3:
+                        new_tendency_data = remakeTendency([data["partner"], data["concept"], data["play"], data["tour"], data["season"]])
+
+                        place["partner"] = new_tendency_data[0].copy()
+                        place["concept"] = new_tendency_data[1].copy()
+                        place["play"] = new_tendency_data[2].copy()
+                        place["tour"] = new_tendency_data[3].copy()
+                        place["season"] = new_tendency_data[4].copy()
+
+                        # 최대 길이 9 -> 11로 변경
+                        feature = np.array([[
+                            data["partner"] + [0, 0, 0, 0],
+                            data["concept"] + [0, 0, 0, 0, 0],
+                            data["play"] + [0, 0, 0, 0, 0],
+                            data["tour"],
+                            data["season"] + [0, 0, 0, 0, 0, 0, 0]
+                        ]], dtype=int)
+                        
                     all_place_map[idx] = place
                     idx += 1
                     # print(feature.shape)

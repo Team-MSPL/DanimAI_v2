@@ -1,11 +1,11 @@
-from .common.constant import Dummy
+from .common.constant import Dummy, Dummy2
 import numpy as np
 from .logging_config import logger
 
 
-def preprocess(place_list, ex_essential_list, ex_accomodation_list, place_feature_matrix):
-    essential_list = essential_place_list_adaptor(ex_essential_list)
-    accomodation_list = accomodation_list_adaptor(ex_accomodation_list)
+def preprocess(place_list, ex_essential_list, ex_accomodation_list, place_feature_matrix, version):
+    essential_list = essential_place_list_adaptor(ex_essential_list, version)
+    accomodation_list = accomodation_list_adaptor(ex_accomodation_list, version)
     place_list, place_feature_matrix = remove_duplicates(place_list, essential_list + accomodation_list, place_feature_matrix)
     return place_list, place_feature_matrix, essential_list, accomodation_list
 
@@ -39,7 +39,7 @@ def remove_duplicates(place_list, ex_list, place_feature_matrix):
 
     return new_place_list, place_feature_matrix
 
-def essential_place_list_adaptor(external_place_list):
+def essential_place_list_adaptor(external_place_list, version):
     adapted_list = []
 
     default_values = {
@@ -54,6 +54,9 @@ def essential_place_list_adaptor(external_place_list):
         "is_accomodation" : False,
         "is_dummy": False
     }
+    if version == 3:
+        default_values["play"] = Dummy2.PLAY
+        default_values["tour"] = Dummy2.TOUR
 
     for item in external_place_list:
         # 객체의 모든 속성을 딕셔너리로 변환
@@ -70,7 +73,7 @@ def essential_place_list_adaptor(external_place_list):
 
     return adapted_list
 
-def accomodation_list_adaptor(external_place_list):
+def accomodation_list_adaptor(external_place_list, version):
     adapted_list = []
 
     default_values = {
@@ -84,6 +87,9 @@ def accomodation_list_adaptor(external_place_list):
         "is_essential": True,
         "is_accomodation": True
     }
+    if version == 3:
+        default_values["play"] = Dummy2.PLAY
+        default_values["tour"] = Dummy2.TOUR
 
     for item in external_place_list:
         # 객체의 모든 속성을 딕셔너리로 변환

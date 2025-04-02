@@ -11,7 +11,7 @@ from .ai.place_score import get_place_score_list, haversine_distance
 from .common.constant import CAR_COEFF, PUBLIC_COEFF, MAX_DISTANCE_SENSITIVITY, RESULT_NUM
 from .logging_config import logger
 
-async def request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth):
+async def request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth, version):
     #fb = FirebaseAccess()
     
     #place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
@@ -35,15 +35,25 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
         select_list[3] + [0],
         select_list[4] + [0, 0, 0, 0, 0]
     ], dtype=int)
+    
+    if version == 3:
+        # 최대 길이 9 -> 11로 변경
+        theme_matrix = np.array([
+            select_list[0] + [0, 0, 0, 0],
+            select_list[1] + [0, 0, 0, 0, 0],
+            select_list[2] + [0, 0, 0, 0, 0],
+            select_list[3],
+            select_list[4] + [0, 0, 0, 0, 0, 0, 0]
+        ], dtype=int)
 
     # 선작업, Firebase 데이터 수집 + place 객체들 데이터 전처리
-    place_list, place_feature_matrix, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list, place_feature_matrix)
+    place_list, place_feature_matrix, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list, place_feature_matrix, version)
     
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
-    result, enough_place = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth)
+    result, enough_place = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth, version)
 
     # 평균 점수 + 점수 보정 + 등수 계산         
-    best_point_list = tendencyCalculate(result, select_list_copy)
+    best_point_list = tendencyCalculate(result, select_list_copy, version)
     best_point_list = standardize(best_point_list)
     best_point_list = getRanking(best_point_list)
     # print(best_point_list)
@@ -51,7 +61,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
 
 
 
-async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng):
+async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version):
     
     # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
     select_list_copy = copy.deepcopy(select_list)
@@ -69,11 +79,22 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
         select_list[4] + [0, 0, 0, 0, 0]
     ], dtype=int)
     
+    
+    if version == 3:
+        # 최대 길이 9 -> 11로 변경
+        theme_matrix = np.array([
+            select_list[0] + [0, 0, 0, 0],
+            select_list[1] + [0, 0, 0, 0, 0],
+            select_list[2] + [0, 0, 0, 0, 0],
+            select_list[3],
+            select_list[4] + [0, 0, 0, 0, 0, 0, 0]
+        ], dtype=int)
+        
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
 
     # 1-1. 전체 점수 계산
-    place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list)
+    place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, version)
     
     # 1-2. 거리 계산
     for place in place_list:

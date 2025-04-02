@@ -3,12 +3,17 @@ from ..common.constant import WEIGHT, RESULT_NUM, DISTANCE_BIAS
 from ..logging_config import logger
 import math
 
-def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list):
+def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, version):
     try:
+        max_tendency_len = 9
+        if version == 3:
+            max_tendency_len = 11
+            
+            
         weight = np.array(WEIGHT)
 
         weight = weight.reshape(1, RESULT_NUM, 5)
-        weight = np.repeat(weight, 9, axis=0)
+        weight = np.repeat(weight, max_tendency_len, axis=0)
         weight = np.transpose(weight, (1, 2, 0))
         distanceBias = np.array(DISTANCE_BIAS)
         # distanceBias = weight * theme_matrix

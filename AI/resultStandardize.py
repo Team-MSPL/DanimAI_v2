@@ -19,7 +19,7 @@ def multiply_2d_arrays(arr1, arr2):
         result.append([x * y for x, y in zip(row1, row2)])
     return result
 
-def tendencyCalculate(path_list, select_list):
+def tendencyCalculate(path_list, select_list, version):
     tendencyAvg = [
             [0, 0, 0, 0, 0, 0, 0], #반려동물과는 나오면 안됨 - 250204 수정
             [0, 0, 0, 0, 0, 0], #
@@ -35,8 +35,23 @@ def tendencyCalculate(path_list, select_list):
             ['봄', '여름', '가을', '겨울'],
         ];
     
-    best_point_list = []
+    if version == 3:
+        tendencyAvg = [
+                [0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0], 
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0], 
+        ]
+        tendencyData = [
+                ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
+                ['힐링', '활동적인', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
+                ['레저 스포츠', '산책', '드라이브', '이색체험', '쇼핑', '시티투어',],
+                ['바다', '산', '실내여행지', '문화시설', '사진 명소', '유적지', '박물관', '전통', '공원', '사찰', '성지'],
+                ['봄', '여름', '가을', '겨울'],
+            ];
     
+    best_point_list = []    
     
     for path in path_list:
         placeNum = 0
