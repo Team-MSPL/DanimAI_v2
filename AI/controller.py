@@ -119,8 +119,9 @@ async def ai_run(aiModel : AIModel):
     bandwidth = aiModel.bandwidth
     version = aiModel.version
     
-    if version == 3:
-        select_list = remakeTendency(select_list)
+    # 어차피 프론트엔드에서 새로운 배열로 줄 것임
+    # if version == 3:
+    #     select_list = remakeTendency(select_list)
     
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
     logger.info(f"version - {version}")
@@ -173,8 +174,9 @@ async def recommend_place(model: RecommendPlaceModel):
     lng = model.lng
     version = model.version
 
-    if version == 3:
-        select_list = remakeTendency(select_list)
+    # 어차피 프론트엔드에서 새로운 배열로 줄 것임
+    # if version == 3:
+    #     select_list = remakeTendency(select_list)
     
     # Firebase에서 장소 정보 읽기
     logger.info(f"version - {version}")
