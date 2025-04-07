@@ -106,11 +106,11 @@ class FirebaseAccess():
 
                         # 최대 길이 9 -> 11로 변경
                         feature = np.array([[
-                            data["partner"] + [0, 0, 0, 0],
-                            data["concept"] + [0, 0, 0, 0, 0],
-                            data["play"] + [0, 0, 0, 0, 0],
-                            data["tour"],
-                            data["season"] + [0, 0, 0, 0, 0, 0, 0]
+                            place["partner"] + [0, 0, 0, 0],
+                            place["concept"] + [0, 0, 0, 0, 0],
+                            place["play"] + [0, 0, 0, 0, 0],
+                            place["tour"],
+                            place["season"] + [0, 0, 0, 0, 0, 0, 0]
                         ]], dtype=int)
                         
                     all_place_map[idx] = place

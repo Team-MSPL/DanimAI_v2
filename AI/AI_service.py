@@ -28,14 +28,6 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
                 # select_item 값을 바꾼다고 select_list 내의 값이 바뀌지는 않음 / 밖에서는 선언되지 않은 값이기에
                 select_list[idx][idx2] = -1
     
-    theme_matrix = np.array([
-        select_list[0] + [0, 0],
-        select_list[1] + [0, 0, 0],
-        select_list[2],
-        select_list[3] + [0],
-        select_list[4] + [0, 0, 0, 0, 0]
-    ], dtype=int)
-    
     if version == 3:
         # 최대 길이 9 -> 11로 변경
         theme_matrix = np.array([
@@ -44,6 +36,14 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
             select_list[2] + [0, 0, 0, 0, 0],
             select_list[3],
             select_list[4] + [0, 0, 0, 0, 0, 0, 0]
+        ], dtype=int)
+    else:
+        theme_matrix = np.array([
+            select_list[0] + [0, 0],
+            select_list[1] + [0, 0, 0],
+            select_list[2],
+            select_list[3] + [0],
+            select_list[4] + [0, 0, 0, 0, 0]
         ], dtype=int)
 
     # 선작업, Firebase 데이터 수집 + place 객체들 데이터 전처리
@@ -71,15 +71,6 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
                 # select_item 값을 바꾼다고 select_list 내의 값이 바뀌지는 않음 / 밖에서는 선언되지 않은 값이기에
                 select_list[idx][idx2] = -1
     
-    theme_matrix = np.array([
-        select_list[0] + [0, 0],
-        select_list[1] + [0, 0, 0],
-        select_list[2],
-        select_list[3] + [0],
-        select_list[4] + [0, 0, 0, 0, 0]
-    ], dtype=int)
-    
-    
     if version == 3:
         # 최대 길이 9 -> 11로 변경
         theme_matrix = np.array([
@@ -89,6 +80,15 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
             select_list[3],
             select_list[4] + [0, 0, 0, 0, 0, 0, 0]
         ], dtype=int)
+    else:
+        theme_matrix = np.array([
+            select_list[0] + [0, 0],
+            select_list[1] + [0, 0, 0],
+            select_list[2],
+            select_list[3] + [0],
+            select_list[4] + [0, 0, 0, 0, 0]
+        ], dtype=int)
+
         
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
