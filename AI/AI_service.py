@@ -61,7 +61,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
 
 
 
-async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version):
+async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version, page, page_for_place):
     
     # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
     select_list_copy = copy.deepcopy(select_list)
@@ -130,7 +130,12 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     sorted_places = [place_list[idx] for idx in sorted_indices]
     place_list = copy.deepcopy(sorted_places)
 
-
-    return place_list
+    # 페이지네이션 적용
+    start_idx = (page - 1) * page_for_place
+    end_idx = start_idx + page_for_place
+    paged_places = place_list[start_idx:end_idx]
+    
+    return paged_places
+    #return place_list
     #return place_list[:10]    # 상위 10개만 리턴
 

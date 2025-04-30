@@ -63,6 +63,8 @@ class RecommendPlaceModel(BaseModel):
     bandwidth: bool
     password: str
     version: int = 1  # 기본값 설정
+    page: int = 1  # 기본값 설정
+    page_for_place: int = 10  # 기본값 설정
     
 
 # async def run_blocking_io_function(args):
@@ -173,6 +175,8 @@ async def recommend_place(model: RecommendPlaceModel):
     lat = model.lat
     lng = model.lng
     version = model.version
+    page = model.page
+    page_for_place = model.page_for_place
 
     # 어차피 프론트엔드에서 새로운 배열로 줄 것임
     # if version == 3:
@@ -187,7 +191,7 @@ async def recommend_place(model: RecommendPlaceModel):
     place_list = list(place_map.values())
 
     # recommend_handler 호출하여 추천 결과 생성
-    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version)
+    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version, page, page_for_place)
 
     end = time.time()  # 실행 종료 시간 기록
     logger.info(end - start)

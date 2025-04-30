@@ -337,6 +337,9 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     clustering_ok = False
     clustered_places = []
     
+    len_places_to_cluster2 = len(places_to_cluster) 
+    essential_count_list_count_zero = essential_count_list.count(0) 
+    
     if essential_count_list.count(0) > 0:
         clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), place_num_avg, max_cluster_size)
         
@@ -355,8 +358,16 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             #클러스터를 new_day_path에 추가
             add_place_list = copy.deepcopy(clustered_places.pop(0))
             
-            # 예외 처리 - 그대로 리턴
-            if add_place_list is None or len(add_place_list):
+            # 예외 처리 - 그대로 리턴 - clustered_places에 []가 섞인 경우
+            if add_place_list is None or len(add_place_list) == 0:
+                logger.error("len_places_to_cluster")
+                logger.error(len_places_to_cluster)
+                logger.error("len_places_to_cluster2")
+                logger.error(len_places_to_cluster2)
+                logger.error("place_num_avg")
+                logger.error(place_num_avg)
+                logger.error("essential_count_list_count_zero")
+                logger.error(essential_count_list_count_zero)
                 return multi_day_path, False
             
             new_day_path.extend(add_place_list)
@@ -372,7 +383,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             final_optimized_path.append(optimized_new_day_path)
         
         
-    # Step 5: 시간 초과 시 경로 수정
+    # Step 5: 시간 초과, 부족 시 경로 수정
     for day_idx, day_path in enumerate(final_optimized_path):
         total_time = sum(place["takenTime"] for place in day_path)
         total_time += move_time * (len(day_path) - 1)

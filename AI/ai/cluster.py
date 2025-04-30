@@ -16,6 +16,10 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
             return [[places_to_cluster[0]], [places_to_cluster[1]]], False    # 2차원 배열로 리턴
         elif len(places_to_cluster) == 1 and target_cluster_count == 2:
             return [[places_to_cluster[0]], []], False    # 2차원 배열로 리턴
+        elif len(places_to_cluster) == 2 and target_cluster_count == 3:
+            return [[places_to_cluster[0]], [places_to_cluster[1]], []], False    # 2차원 배열로 리턴
+        elif len(places_to_cluster) == 1 and target_cluster_count == 3:
+            return [[places_to_cluster[0]], [], []], False    # 2차원 배열로 리턴
     
     # elif target_cluster_count == 2:
     #     return [places_to_cluster[0:min_cluster_size], places_to_cluster[min_cluster_size + 1:]], True
