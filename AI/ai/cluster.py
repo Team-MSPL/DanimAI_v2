@@ -7,6 +7,8 @@ import copy
         
 def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_size, max_cluster_size):
     
+    required_places = target_cluster_count * min_cluster_size
+    
     if target_cluster_count == 1:
         return [places_to_cluster], False    # 2차원 배열로 리턴
     
@@ -20,6 +22,10 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
             return [[places_to_cluster[0]], [places_to_cluster[1]], []], False    # 2차원 배열로 리턴
         elif len(places_to_cluster) == 1 and target_cluster_count == 3:
             return [[places_to_cluster[0]], [], []], False    # 2차원 배열로 리턴
+        
+    elif not len(places_to_cluster) >= required_places:
+        logger.error(f"클러스터링 불가: 필요한 관광지 {required_places}개, 실제 {len(places_to_cluster)}개")
+        return [[] for i in range(len(target_cluster_count))], False
     
     # elif target_cluster_count == 2:
     #     return [places_to_cluster[0:min_cluster_size], places_to_cluster[min_cluster_size + 1:]], True

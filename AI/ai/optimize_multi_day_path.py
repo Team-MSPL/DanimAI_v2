@@ -273,6 +273,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     #하루당 평균 관광지 수 - places_to_cluster 갯수에 따라 변하지 않도록
     len_places_to_cluster = len(places_to_cluster) 
     place_num_avg = len_places_to_cluster // len(multi_day_path)
+    all_place_num_avg = (len_places_to_cluster + sum(essential_count_list)) // len(multi_day_path)
     
     # 전부 필수여행지로만 채운 경우, 바로 리턴
     if len(places_to_cluster) < 2 or place_num_avg < 2:
@@ -287,7 +288,7 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     max_cluster_size = place_num_avg + 2 if int(len(places_to_cluster) / len(multi_day_path) * 10) % 10 >= 5 else place_num_avg + 1
     
     
-    # Step 2: 필수 여행지가 있는 경우 당일 배정된 필수 여행지들의 중점 좌표와 가까운 장소들로 채워서, 갯수가 place_num_avg 이상이 되게 
+    # Step 2: 필수 여행지가 있는 경우 당일 배정된 필수 여행지들의 중점 좌표와 가까운 장소들로 채워서, 갯수가 all_place_num_avg 이상이 되게 
     for idx, day_path in enumerate(multi_day_path):
         if essential_count_list[idx] > 0:
             essential_places = [place for place in day_path if place["is_essential"]]
@@ -302,10 +303,10 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 # places_to_cluster 내 장소들과의 거리 계산
                 distances = cdist([essential_center], [[place['lat'], place['lng']] for place in places_to_cluster])
                 
-                # 가까운 장소부터 place_num_avg 수 만큼 추가
+                # 가까운 장소부터 all_place_num_avg 수 만큼 추가
                 sorted_indices = np.argsort(distances[0])
                 
-                for i in sorted_indices[:place_num_avg - len(essential_places_without_accomodation)]:
+                for i in sorted_indices[:all_place_num_avg - len(essential_places_without_accomodation)]:
                     place_to_add = places_to_cluster[i]
                     places_to_add.append(copy.deepcopy(place_to_add))
                 
@@ -341,8 +342,10 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     essential_count_list_count_zero = essential_count_list.count(0) 
     
     if essential_count_list.count(0) > 0:
-        clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), place_num_avg, max_cluster_size)
+        clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), all_place_num_avg, max_cluster_size)
         
+    clustered_places_copy = copy.deepcopy(clustered_places)
+
     final_optimized_path = []
     
     # Step 4 : 코스 최적화
@@ -360,6 +363,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
             
             # 예외 처리 - 그대로 리턴 - clustered_places에 []가 섞인 경우
             if add_place_list is None or len(add_place_list) == 0:
+                logger.error("clustered_places_copy")
+                logger.error(clustered_places_copy)
                 logger.error("len_places_to_cluster")
                 logger.error(len_places_to_cluster)
                 logger.error("len_places_to_cluster2")
