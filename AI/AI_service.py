@@ -63,6 +63,8 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
 
 async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version, page, page_for_place):
     
+    all_zero_flag = False
+    
     # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
     select_list_copy = copy.deepcopy(select_list)
     for idx, select in enumerate(select_list):
@@ -70,6 +72,8 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
             if select_item == 0:
                 # select_item 값을 바꾼다고 select_list 내의 값이 바뀌지는 않음 / 밖에서는 선언되지 않은 값이기에
                 select_list[idx][idx2] = -1
+            else:
+                all_zero_flag = True
     
     if version == 3:
         # 최대 길이 9 -> 11로 변경
@@ -116,6 +120,12 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
             lat_diff = place_list[index]["lat"] - lat
             lon_diff = place_list[index]["lng"] - lng
             distance = math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
+            
+            # all_zero_flag인 경우에도 인기도는 계산되므로, 거리순으로 정렬할때 인기도 배제해줘야함 - TODO 만약 인기도 + 거리를 계산해야 할 경우가 생기면 수정
+            # 현재 거리순 = 위치 정보 O, 성향 정보 X - 일반적인 상황에서는 계절 성향이 기본으로 포함되기에 안걸림
+            if all_zero_flag:
+                place_score_list[i][0] = 0
+            
             # 점수 수정            
             place_score_list[i][0] -= distance * (MAX_DISTANCE_SENSITIVITY - distance_sensitivity) * dist_coef * distance_bias
     
@@ -126,20 +136,21 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     
     score_range = max_score - min_score if max_score != min_score else 1  # 분모 0 방지
 
-    for i in range(len(place_score_list)):
-        raw_score = place_score_list[i][0]
-        #norm_score = (raw_score - min_score) / score_range * 100
-        norm_score = (raw_score - min_score) / score_range * 50 + 50
+    if not all_zero_flag:
+        for i in range(len(place_score_list)):
+            raw_score = place_score_list[i][0]
+            #norm_score = (raw_score - min_score) / score_range * 100
+            norm_score = (raw_score - min_score) / score_range * 50 + 50
 
-        # 소숫점 제거: 정수로 변환 (반올림 또는 내림 선택 가능)
-        norm_score = int(round(norm_score))  # 반올림
-        #norm_score = int(norm_score)      # 버림
+            # 소숫점 제거: 정수로 변환 (반올림 또는 내림 선택 가능)
+            norm_score = int(round(norm_score))  # 반올림
+            #norm_score = int(norm_score)      # 버림
 
-        place_score_list[i][0] = norm_score
+            place_score_list[i][0] = norm_score
 
-        index = place_score_list[i][1]
-        place_list[index]["score"] = norm_score  # 정수 점수로 갱신
-    
+            index = place_score_list[i][1]
+            place_list[index]["score"] = norm_score  # 정수 점수로 갱신
+        
     # 3. 관광지 점수가 높은 순으로 정렬 (내림차순)
     place_score_list = sorted(place_score_list, key=lambda x: -x[0])
     
@@ -204,7 +215,7 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
             topTendency = sorted_scores[:3]
         
         # 결과 저장
-        place['top_tendencies'] = [label for label, score in topTendency]
+        place['top_tendencies'] = [label for label, score in topTendency]  # 나중에 score 쓰려면 4/3 곱해야함
 
 
     return paged_places
