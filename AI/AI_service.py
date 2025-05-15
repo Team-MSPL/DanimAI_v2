@@ -117,10 +117,27 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
         distance = math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
         # 점수 수정            
         place_score_list[i][0] -= distance * (MAX_DISTANCE_SENSITIVITY - distance_sensitivity) * dist_coef * distance_bias
-        
-        # 각 place 객체에 "관광지 점수" 추가
-        place_list[index]["score"] = place_score_list[i][0]  # 관광지 점수 추가
     
+    # 2+. 관광지 점수 정규화 ( 50~100점 )
+    scores = [score for score, _, _ in place_score_list]
+    min_score = min(scores)
+    max_score = max(scores)
+    
+    score_range = max_score - min_score if max_score != min_score else 1  # 분모 0 방지
+
+    for i in range(len(place_score_list)):
+        raw_score = place_score_list[i][0]
+        #norm_score = (raw_score - min_score) / score_range * 100
+        norm_score = (raw_score - min_score) / score_range * 50 + 50
+
+        # 소숫점 제거: 정수로 변환 (반올림 또는 내림 선택 가능)
+        norm_score = int(round(norm_score))  # 반올림
+        #norm_score = int(norm_score)      # 버림
+
+        place_score_list[i][0] = norm_score
+
+        index = place_score_list[i][1]
+        place_list[index]["score"] = norm_score  # 정수 점수로 갱신
     
     # 3. 관광지 점수가 높은 순으로 정렬 (내림차순)
     place_score_list = sorted(place_score_list, key=lambda x: -x[0])
@@ -134,7 +151,52 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     start_idx = (page - 1) * page_for_place
     end_idx = start_idx + page_for_place
     paged_places = place_list[start_idx:end_idx]
+
+    # 성향 계산 - 높은 성향 표기
+    tendencyData = [
+            ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
+            ['힐링', '활동적인', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
+            ['레저 스포츠', '문화시설', '사진 명소', '이색체험', '유적지', '박물관', '공원', '사찰', '성지'],
+            ['바다', '산', '드라이브', '산책', '쇼핑', '실내여행지', '시티투어', '전통'],
+            #['봄', '여름', '가을', '겨울'],  # 계절 점수 제거 - TODO 수정 가능
+        ];    
+    if version == 3:
+        tendencyData = [
+                ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
+                ['힐링', '활동적인', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
+                ['레저 스포츠', '산책', '드라이브', '이색체험', '쇼핑', '시티투어',],
+                ['바다', '산', '실내여행지', '문화시설', '사진 명소', '유적지', '박물관', '전통', '공원', '사찰', '성지'],
+                #['봄', '여름', '가을', '겨울'],  # 계절 점수 제거 - TODO 수정 가능
+            ];
     
+    for place in paged_places:
+        # 계절 점수 제거 - TODO 수정 가능
+        concept_list = [place['partner'], place['concept'], place['play'], place['tour']]
+        
+        # 각 성향 점수와 이름을 (이름, 점수) 형태로 모두 펼치기
+        tendency_scores = []
+        for category_scores, category_labels in zip(concept_list, tendencyData):
+            for score, label in zip(category_scores, category_labels):
+                tendency_scores.append((label, score))
+        
+        # 점수 기준으로 정렬
+        sorted_scores = sorted(tendency_scores, key=lambda x: -x[1])
+        
+        # 상위 점수 추출
+        top_score = sorted_scores[0][1]
+        top_candidates = [item for item in sorted_scores if item[1] == top_score]
+        
+        if len(top_candidates) >= 3:
+            # 동점이 3개 이상이면 무작위로 3개 선택 - TODO 수정 가능
+            topTendency = random.sample(top_candidates, 3)
+        else:
+            # 동점이 3개 미만이면, 순서대로 최대 3개까지 추출
+            topTendency = sorted_scores[:3]
+        
+        # 결과 저장
+        place['top_tendencies'] = [label for label, score in topTendency]
+
+
     return paged_places
     #return place_list
     #return place_list[:10]    # 상위 10개만 리턴

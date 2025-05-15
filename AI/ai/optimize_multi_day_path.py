@@ -289,10 +289,14 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     
     
     # Step 2: 필수 여행지가 있는 경우 당일 배정된 필수 여행지들의 중점 좌표와 가까운 장소들로 채워서, 갯수가 all_place_num_avg 이상이 되게 
-    for idx, day_path in enumerate(multi_day_path):
-        if essential_count_list[idx] > 0:
+    for day_idx, day_path in enumerate(multi_day_path):
+        if essential_count_list[day_idx] > 0:
             essential_places = [place for place in day_path if place["is_essential"]]
             essential_places_without_accomodation = [place for place in day_path if place["is_essential"] and not place["is_accomodation"]]
+            
+            
+            total_time = sum(place["takenTime"] for place in essential_places_without_accomodation)
+            total_time += move_time * (len(essential_places) - 1)        
             
             # 필수 여행지 ( + 있다면 숙소도 ) 의 평균 좌표 계산
             essential_coordinates = np.array([[place['lat'], place['lng']] for place in essential_places])
@@ -307,8 +311,11 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 sorted_indices = np.argsort(distances[0])
                 
                 for i in sorted_indices[:all_place_num_avg - len(essential_places_without_accomodation)]:
-                    place_to_add = places_to_cluster[i]
-                    places_to_add.append(copy.deepcopy(place_to_add))
+                    places_to_add.append(copy.deepcopy(places_to_cluster[i]))
+                    
+                    total_time += places_to_cluster[i]["takenTime"] + move_time
+                    if not total_time < time_limit_list[day_idx] - UNDER_TIME:
+                        break
                 
                 for i, item in enumerate(places_to_add):
                     # 추가한 장소는 places_to_cluster에서 제거
