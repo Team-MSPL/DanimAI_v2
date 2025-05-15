@@ -96,27 +96,28 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     # 1-1. 전체 점수 계산
     place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, version)
     
-    # 1-2. 거리 계산
-    for place in place_list:
-        place["distance"] = haversine_distance(lat, lng, place['lat'], place['lng'])    # 실제 거리
-        
     dist_coef = CAR_COEFF if transit == 0 else PUBLIC_COEFF
     
     # 랜덤으로 다양하게 추천 - TODO 어떤 가중치로 할지 결정?
     t = random.randint(0, RESULT_NUM - 1)
     place_score_list = copy.deepcopy(place_score_matrix[t])
     distance_bias = copy.deepcopy(distance_bias_matrix[t])
+    
+    # 1-2. 거리 계산
+    if lat != 0.0 and lng != 0.0:
+        for place in place_list:
+            place["distance"] = haversine_distance(lat, lng, place['lat'], place['lng'])    # 실제 거리
         
-    # 2. 관광지 점수를 "관광지 점수 - distance"로 수정
-    for i in range(len(place_score_list)):
-        index = place_score_list[i][1]  # 인덱스 가져오기
-        
-        # 여기서는, 좌표간 거리
-        lat_diff = place_list[index]["lat"] - lat
-        lon_diff = place_list[index]["lng"] - lng
-        distance = math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
-        # 점수 수정            
-        place_score_list[i][0] -= distance * (MAX_DISTANCE_SENSITIVITY - distance_sensitivity) * dist_coef * distance_bias
+        # 2. 관광지 점수를 "관광지 점수 - distance"로 수정
+        for i in range(len(place_score_list)):
+            index = place_score_list[i][1]  # 인덱스 가져오기
+            
+            # 여기서는, 좌표간 거리
+            lat_diff = place_list[index]["lat"] - lat
+            lon_diff = place_list[index]["lng"] - lng
+            distance = math.sqrt((lat_diff ** 2) + (lon_diff ** 2))
+            # 점수 수정            
+            place_score_list[i][0] -= distance * (MAX_DISTANCE_SENSITIVITY - distance_sensitivity) * dist_coef * distance_bias
     
     # 2+. 관광지 점수 정규화 ( 50~100점 )
     scores = [score for score, _, _ in place_score_list]
@@ -154,28 +155,37 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
 
     # 성향 계산 - 높은 성향 표기
     tendencyData = [
-            ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
             ['힐링', '활동적인', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
             ['레저 스포츠', '문화시설', '사진 명소', '이색체험', '유적지', '박물관', '공원', '사찰', '성지'],
             ['바다', '산', '드라이브', '산책', '쇼핑', '실내여행지', '시티투어', '전통'],
+            ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
             #['봄', '여름', '가을', '겨울'],  # 계절 점수 제거 - TODO 수정 가능
         ];    
     if version == 3:
         tendencyData = [
-                ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
                 ['힐링', '활동적인', '배움이 있는', '맛있는', '교통이 편한', '알뜰한'],
                 ['레저 스포츠', '산책', '드라이브', '이색체험', '쇼핑', '시티투어',],
                 ['바다', '산', '실내여행지', '문화시설', '사진 명소', '유적지', '박물관', '전통', '공원', '사찰', '성지'],
+                ['나홀로', '연인과', '친구와', '가족과', '효도', '자녀와', '반려동물과'],
                 #['봄', '여름', '가을', '겨울'],  # 계절 점수 제거 - TODO 수정 가능
             ];
     
     for place in paged_places:
         # 계절 점수 제거 - TODO 수정 가능
-        concept_list = [place['partner'], place['concept'], place['play'], place['tour']]
+        concept_list = [place['concept'], place['play'], place['tour'], place['partner']]
         
+        select_list_mod = [select_list[1],select_list[2],select_list[3],select_list[0]]
+        
+        for i in range(len(select_list_mod)):
+            for j in range(len(select_list_mod[i])):
+                if select_list_mod[i][j] < 0:
+                    select_list_mod[i][j] = 0.75
+                
         # 각 성향 점수와 이름을 (이름, 점수) 형태로 모두 펼치기
         tendency_scores = []
-        for category_scores, category_labels in zip(concept_list, tendencyData):
+        concept_list_select = sum_2d_arrays(select_list_mod, concept_list)
+                
+        for category_scores, category_labels in zip(concept_list_select, tendencyData):
             for score, label in zip(category_scores, category_labels):
                 tendency_scores.append((label, score))
         
@@ -201,3 +211,11 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     #return place_list
     #return place_list[:10]    # 상위 10개만 리턴
 
+
+# 2차원 배열을 원소별로 합하는 함수
+def sum_2d_arrays(arr1, arr2):
+    result = []
+    for row1, row2 in zip(arr1, arr2):
+        # 각 행의 같은 인덱스에 있는 값끼리 합산
+        result.append([x + y for x, y in zip(row1, row2)])
+    return result
