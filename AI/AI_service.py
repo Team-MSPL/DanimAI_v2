@@ -63,7 +63,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
 
 async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version, page, page_for_place):
     
-    all_zero_flag = False
+    all_zero_flag = True
     
     # 선택 안한 성향들을 -1로 수정하였음 TODO 결과값 비교해보기
     select_list_copy = copy.deepcopy(select_list)
@@ -73,7 +73,7 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
                 # select_item 값을 바꾼다고 select_list 내의 값이 바뀌지는 않음 / 밖에서는 선언되지 않은 값이기에
                 select_list[idx][idx2] = -1
             else:
-                all_zero_flag = True
+                all_zero_flag = False  # 하나라도 있으면 all_zero가 아님
     
     if version == 3:
         # 최대 길이 9 -> 11로 변경
