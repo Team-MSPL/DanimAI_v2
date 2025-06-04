@@ -7,8 +7,10 @@ WEIGHT : Final = []
 DISTANCE_BIAS : Final = []
 for n in range(RESULT_NUM):
     #WEIGHT.append([i * (RESULT_NUM - n) for i in [40, 200, 200, 200, 20]])
-    WEIGHT.append([(((n + idx) % RESULT_NUM + 1) ** n) * item * (RESULT_NUM - n) for idx, item in enumerate([100, 200, 200, 200, 30])])
-    DISTANCE_BIAS.append(15000 * (RESULT_NUM - n))
+    #WEIGHT.append([(((n + idx) % RESULT_NUM + 1) ** n) * item * (RESULT_NUM - n) for idx, item in enumerate([100, 200, 200, 200, 30])])  # 250604
+    WEIGHT.append([(((n + idx) % RESULT_NUM + 1) ** n) * item * (RESULT_NUM - n) for idx, item in enumerate([100, 200, 200, 200, 25])])
+    #DISTANCE_BIAS.append(15000 * (RESULT_NUM - n))  # 250604
+    DISTANCE_BIAS.append(10000 * (RESULT_NUM - n))
 
 MAX_DISTANCE_SENSITIVITY :Final = 10
 PUBLIC_COEFF :Final = 10
@@ -23,8 +25,10 @@ OVER_TIME = 60
 UNDER_TIME = 120
 
 # 반복문 돌리는 횟수 ( 힐클라임 최대 횟수 )
-HILL_LIMIT = 3000
-HILL_SWITCH_LIMIT = 100
+#HILL_LIMIT = 3000 # 250604
+# HILL_SWITCH_LIMIT = 100 # 250604
+HILL_LIMIT = 1500
+HILL_SWITCH_LIMIT = 50
 
 # 좌표간 거리 계산에 사용하는 큰 숫자 - 양 끝 노드 ( 숙소 )를 고정할 때 사용함
 LARGE_NUMBER = 10000

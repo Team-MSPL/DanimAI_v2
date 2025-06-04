@@ -3,14 +3,24 @@ from ..common.constant import WEIGHT, RESULT_NUM, DISTANCE_BIAS
 from ..logging_config import logger
 import math
 
-def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, version):
+def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, popular_sensitivity, version):
     try:
         max_tendency_len = 9
         if version == 3:
             max_tendency_len = 11
             
-            
+                    
+        # 인기도 가중치 매핑: -25 ~ 75
+        mapped_tail_weight = -25 + (popular_sensitivity / 10) * 100
+
+        # WEIGHT는 2차원 배열 → numpy로 변환 후 수정
         weight = np.array(WEIGHT)
+
+        try:
+            # 맨 뒤 5번째 항목(인덱스 4)을 사용자 기반 값으로 덮어쓰기
+            weight[:, 4] = weight[:, 4] * (mapped_tail_weight / 25)  # 비율로 조정 ( constant.py에서 스케일링 했기에 )
+        except Exception as error:
+            logger.error(f"인기도 가중치 설정 중 오류 발생 :, {error}")
 
         weight = weight.reshape(1, RESULT_NUM, 5)
         weight = np.repeat(weight, max_tendency_len, axis=0)

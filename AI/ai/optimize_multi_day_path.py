@@ -378,6 +378,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 logger.error(len_places_to_cluster2)
                 logger.error("place_num_avg")
                 logger.error(place_num_avg)
+                logger.error("all_place_num_avg")
+                logger.error(all_place_num_avg)
                 logger.error("essential_count_list_count_zero")
                 logger.error(essential_count_list_count_zero)
                 return multi_day_path, False

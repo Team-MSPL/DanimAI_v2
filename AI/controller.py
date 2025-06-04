@@ -48,6 +48,7 @@ class AIModel(BaseModel):
     nDay: int
     transit: int
     distanceSensitivity: int
+    popularSensitivity: int = 5  # 기본값 설정
     bandwidth: bool
     password: str
     version: int = 1  # 기본값 설정
@@ -58,6 +59,7 @@ class RecommendPlaceModel(BaseModel):
     selectList: List[List[int]]
     transit: int
     distanceSensitivity: int
+    popularSensitivity: int = 5  # 기본값 설정
     lat: float
     lng: float
     bandwidth: bool
@@ -118,6 +120,7 @@ async def ai_run(aiModel : AIModel):
     n_day = aiModel.nDay
     transit = aiModel.transit
     distance_sensitivity = aiModel.distanceSensitivity
+    popular_sensitivity = aiModel.popularSensitivity
     bandwidth = aiModel.bandwidth
     version = aiModel.version
     
@@ -127,7 +130,13 @@ async def ai_run(aiModel : AIModel):
     
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
     logger.info(f"version - {version}")
+    if region_list == ['제주 전체']:
+        region_list = ['제주 제주시', '제주 서귀포시']
+    elif region_list == ['서울 전체']:
+        region_list = ['서울 도심권', '서울 서북권', '서울 서남권', '서울 동북권', '서울 동남권']
+
     logger.info(f"API 호출 지역 - {region_list}")
+
     fb = FirebaseAccess()
     place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth, version)
     
@@ -139,7 +148,7 @@ async def ai_run(aiModel : AIModel):
     # request_handler가 비동기 처리되도록 함
     resultData, bestPointList, enough_place = await request_handler(
         place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
-        time_limit_array, n_day, transit, distance_sensitivity, bandwidth, version
+        time_limit_array, n_day, transit, distance_sensitivity, popular_sensitivity, bandwidth, version
     )
 
     end = time.time()
@@ -171,6 +180,7 @@ async def recommend_place(model: RecommendPlaceModel):
     select_list = model.selectList
     transit = model.transit
     distance_sensitivity = model.distanceSensitivity
+    popular_sensitivity = model.popularSensitivity
     bandwidth = model.bandwidth
     lat = model.lat
     lng = model.lng
@@ -184,6 +194,11 @@ async def recommend_place(model: RecommendPlaceModel):
     
     # Firebase에서 장소 정보 읽기
     logger.info(f"version - {version}")
+    if region_list == ['제주 전체']:
+        region_list = ['제주 제주시', '제주 서귀포시']
+    elif region_list == ['서울 전체']:
+        region_list = ['서울 도심권', '서울 서북권', '서울 서남권', '서울 동북권', '서울 동남권']
+
     logger.info(f"Recommend Place API 호출 지역 - {region_list}")
     fb = FirebaseAccess()
     place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth, version)
@@ -191,7 +206,7 @@ async def recommend_place(model: RecommendPlaceModel):
     place_list = list(place_map.values())
 
     # recommend_handler 호출하여 추천 결과 생성
-    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, lat, lng, version, page, page_for_place)
+    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, popular_sensitivity, lat, lng, version, page, page_for_place)
 
     end = time.time()  # 실행 종료 시간 기록
     logger.info(end - start)
