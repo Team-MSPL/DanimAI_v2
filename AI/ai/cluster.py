@@ -88,17 +88,48 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
     # 클러스터 수가 목표 수보다 적으면 클러스터 수를 증가시키고, 많으면 감소시킴
     current_cluster_count = len(clusters)
     
+    iteration = 0
+    
     if current_cluster_count > target_cluster_count:
         # 클러스터 수가 너무 많으면 제일 작은 클러스터를 쪼개서 병합 ( 한 클러스터에 든 장소가 적으면 )
         new_clusters = copy.deepcopy(clusters)
         while len(new_clusters) > target_cluster_count:
             new_clusters = split_smallest_cluster_and_reassign(new_clusters)
+            iteration += 1
+            if iteration > 5:
+                # split 안되면, 그냥 구간 쪼개서 리턴 - min_cluster_size만큼씩
+                logger.info("split 안되면, 그냥 구간 쪼개서 리턴 - min_cluster_size만큼씩")
+                result = []
+                try:
+                    for i in range(target_cluster_count):
+                        #result.append(places_to_cluster[i * min_cluster_size : ((i+1) * min_cluster_size) - 1])
+                        result.append(places_to_cluster[i * min_cluster_size : (i+1) * min_cluster_size])
+                    return result, False
+                except Exception as e:
+                    logger.error("구간 쪼개서 리턴 중 에러 발생")
+                    logger.error(e)
+                    return [[] for _ in range(target_cluster_count)], False      
         return list(new_clusters.values()), True
+    
     elif current_cluster_count < target_cluster_count:
         # 클러스터 수가 너무 적으면 제일 큰 클러스터를 쪼개서 클러스터 갯수의 균형을 맞춤 ( 한 클러스터에 든 장소가 많으면 )
         new_clusters = copy.deepcopy(clusters)
         while len(new_clusters) < target_cluster_count:
             new_clusters = split_largest_clusters(new_clusters)
+            iteration += 1
+            if iteration > 5:
+                # split 안되면, 그냥 구간 쪼개서 리턴 - min_cluster_size만큼씩
+                logger.info("split 안되면, 그냥 구간 쪼개서 리턴 - min_cluster_size만큼씩")
+                result = []
+                try:
+                    for i in range(target_cluster_count):
+                        #result.append(places_to_cluster[i * min_cluster_size : ((i+1) * min_cluster_size) - 1])
+                        result.append(places_to_cluster[i * min_cluster_size : (i+1) * min_cluster_size])
+                    return result, False
+                except Exception as e:
+                    logger.error("구간 쪼개서 리턴 중 에러 발생")
+                    logger.error(e)
+                    return [[] for _ in range(target_cluster_count)], False
         return list(new_clusters.values()), True
     
     # 이미 목표 클러스터 수와 일치하면 그대로 반환
@@ -142,6 +173,11 @@ def split_largest_clusters(clusters):
     
     # 가장 큰 클러스터를 가져옴
     large_cluster = copy.deepcopy(clusters[largest_cluster_id])
+        
+    # 쪼갤 수 없을 정도로 작은 경우는 패스 - 250610
+    if len(large_cluster) <= 2:
+        return clusters  # 쪼갤 수 없음    
+    
     coordinates = np.array([[place['lat'], place['lng']] for place in large_cluster])
     
     # 클러스터의 중심을 계산
@@ -157,6 +193,10 @@ def split_largest_clusters(clusters):
     group1 = [large_cluster[i] for i in range(len(large_cluster)) if distances_to_center[i] <= median_distance]
     group2 = [large_cluster[i] for i in range(len(large_cluster)) if distances_to_center[i] > median_distance]
     
+    # 둘 중 하나라도 비면 쪼개지 않음 - 250610
+    if not group1 or not group2:
+        return clusters  # 쪼개지 않고 그대로 반환
+    
     # 나눈 클러스터들 추가
     del clusters[largest_cluster_id]
     
@@ -167,3 +207,4 @@ def split_largest_clusters(clusters):
     clusters[new_cluster_id2] = group2
     
     return clusters
+
