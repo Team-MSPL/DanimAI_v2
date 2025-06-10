@@ -25,7 +25,8 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
         
     elif not len(places_to_cluster) >= required_places:
         logger.error(f"클러스터링 불가: 필요한 관광지 {required_places}개, 실제 {len(places_to_cluster)}개")
-        return [[] for i in range(len(target_cluster_count))], False
+        return [[] for _ in range(target_cluster_count)], False
+
     
     # elif target_cluster_count == 2:
     #     return [places_to_cluster[0:min_cluster_size], places_to_cluster[min_cluster_size + 1:]], True
@@ -70,7 +71,8 @@ def cluster_with_hdbscan(places_to_cluster, target_cluster_count, min_cluster_si
         if len(cluster_centers) == 0:
             result = []
             for i in range(target_cluster_count):
-                result.append(places_to_cluster[i * min_cluster_size : ((i+1) * min_cluster_size) - 1])
+                #result.append(places_to_cluster[i * min_cluster_size : ((i+1) * min_cluster_size) - 1])
+                result.append(places_to_cluster[i * min_cluster_size : (i+1) * min_cluster_size])
             return result, False
     
     clusters = {}
