@@ -1,10 +1,9 @@
 
 from shapely.geometry import LineString
 from ..logging_config import logger
-import copy
 
 # 1일차 코스, 2일차 코스끼리 연결하지 않는 경우 - O(n^2 * d^2)
-def remove_routes_with_intersections(path, place_score_avg_list):
+def remove_routes_with_intersections(path):
     """
     전체 여행 코스에서 lat, lng 좌표를 사용해 선분을 만들고,
     하루별 경로끼리 교차 지점이 1개 이상인 코스를 삭제합니다.
@@ -50,32 +49,19 @@ def remove_routes_with_intersections(path, place_score_avg_list):
         
         # return intersections_count
 
-    filtered_path = []
-    filtered_place_score_avg_list = []
-    
     # 교차 횟수가 1 이상인 코스를 제거하여 새로운 리스트 생성
-    #filtered_path = [route for route in path if count_intersections(route) < 1]    
-    for i, route in enumerate(path):
-        if count_intersections(route) < 1:
-            filtered_path.append(copy.deepcopy(route))
-            filtered_place_score_avg_list.append(place_score_avg_list[i])
+    filtered_path = [route for route in path if count_intersections(route) < 1]
     
     if len(path) - len(filtered_path) > 0:
         logger.info("교차 횟수가 1 이상인 코스 제거 : %s 개", str(len(path) - len(filtered_path)))
     
     if len(filtered_path) == 0:
-        #filtered_path = [route for route in path if count_intersections(route) < 2]
-        # 교차 2 이상만 제거하는 완화된 조건
-        for i, route in enumerate(path):
-            if count_intersections(route) < 2:
-                filtered_path.append(copy.deepcopy(route))
-                filtered_place_score_avg_list.append(place_score_avg_list[i])
-                
+        filtered_path = [route for route in path if count_intersections(route) < 2]
         logger.info("교차 횟수가 2 이상인 코스 제거 : %s 개", str(len(path) - len(filtered_path)))
         if len(filtered_path) == 0:
             logger.info("교차 횟수가 2 이하인 코스가 없음")
-            return path, place_score_avg_list
+            return path
         
-    return filtered_path, filtered_place_score_avg_list
+    return filtered_path
 
 

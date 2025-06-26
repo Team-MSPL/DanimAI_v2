@@ -6,7 +6,7 @@ from .hill_climb import hill_climb
 from .distance import tsp
 from .initialize_greedy import initialize_greedy
 from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
-from .place_score import get_place_score_list, geo_efficiency, diversity_score, popularity_stats
+from .place_score import get_place_score_list
 from .optimize_multi_day_path import optimize_multi_day_path
 from .remove_intersections import remove_routes_with_intersections
 import traceback
@@ -36,7 +36,6 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
 
     path_list = []
     clustering_ok_list = [] # clustering이 잘 된 path면 True
-    place_score_avg_list = []
 
     # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
     for t in range(RESULT_NUM):
@@ -51,29 +50,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             
             # RESULT_NUM만큼 반복하여 결과물 코스를 산출함 ( 이전 코드의 쓰레드 수 )
             # deepcopy를 이용하여 각 반복별로 이미 경로에 들어간 관광지를 따로따로 제거
-            result, multi_day_place_idx_list, enough_place, clustering_ok = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
-
-            len_place_score_avg_list = len(place_score_avg_list)
-            
-            try:
-                values = [x[0] if len(x) > 0 else 0 for x in multi_day_place_idx_list]
-
-                # 평균 계산
-                average = sum(values) / len(values)
-
-                logger.info("평균")
-                logger.info(average)
-                place_score_avg_list.append(average)
-                
-                # diversity_score, geo_efficiency, place_score_avg, popular_dev 기반 강화학습 예정
-                
-            except Exception as e:
-                logger.error("place_score_avg_list")
-                logger.error(e)
-                
-            # 에러나서 안들어갈 경우 대비
-            if len_place_score_avg_list == len(place_score_avg_list):
-                place_score_avg_list.append(0)                
+            result, enough_place, clustering_ok = route_search_repeat(copy.deepcopy(place_list), copy.deepcopy(place_score_list[t]), copy.deepcopy(accomodation_list), copy.deepcopy(essential_place_list), time_limit_list, params)
 
             path_list.append(result)
             clustering_ok_list.append(clustering_ok)
@@ -85,89 +62,50 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     # 클러스터링 잘 된 코스가 하나라도 있으면 안된 코스들은 제거
     if clustering_ok_list.count(True) > 1:
         len_path_list = len(path_list)
-        new_path_list = []
-        new_place_score_avg_list = []
-        #path_list = [path for idx, path in enumerate(path_list) if clustering_ok_list[idx]]
-        for idx, ok in enumerate(clustering_ok_list):
-            if ok:
-                new_path_list.append(path_list[idx])
-                new_place_score_avg_list.append(place_score_avg_list[idx])
-        
-        path_list = copy.deepcopy(new_path_list)
-        place_score_avg_list = new_place_score_avg_list
+        path_list = [path for idx, path in enumerate(path_list) if clustering_ok_list[idx]]
 
         logger.info(f"클러스터링 잘 안된 코스들은 제거, 갯수 : {len_path_list - len(path_list)}")
 
     
         # 교차하는 지점이 있는 코스 제거
-        try:
-            path_list_without_intersections, new_place_score_avg_list = copy.deepcopy(remove_routes_with_intersections(path_list, place_score_avg_list))
-            
-            path_list = copy.deepcopy(path_list_without_intersections)
-            place_score_avg_list = new_place_score_avg_list
-        except Exception as e:
-            logger.error("교차 제거 중 에러 발생")
-            logger.error(e)
-    
-    # 해시를 사용하여 중복 제거
-    result = []
-    seen_hashes = set()
-    new_place_score_avg_list = []
+        path_list_without_intersections = copy.deepcopy(remove_routes_with_intersections(path_list))
 
-    for idx, path in enumerate(path_list):
-        a = copy.deepcopy(path)
-        
-        # 각 하루치 경로를 위도(lat) 기준으로 정렬
-        sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
-        
-        # 경로의 고유성을 해시값으로 표현하여 확인
-        a_hash = tuple(hash_day(day) for day in sorted_a)
-        
-        # 고유한 해시값이 없는 경우만 결과에 추가
-        if a_hash not in seen_hashes:
-            seen_hashes.add(a_hash)
-            result.append(copy.deepcopy(a))
-            new_place_score_avg_list.append(place_score_avg_list[idx])
-        else:
-            logger.info(f"중복 제거 : {a}")
-    place_score_avg_list = copy.deepcopy(new_place_score_avg_list)
-            
-            
-    geo_score_list = []
-    div_score = 0.0
-    popular_scores_list = []
+        # 해시를 사용하여 중복 제거
+        result = []
+        seen_hashes = set()
     
-    result_eval = {}
+        while path_list_without_intersections:
+            a = path_list_without_intersections.pop()  # 원래 경로를 pop하여 가져옴
+            
+            # 각 하루치 경로를 위도(lat) 기준으로 정렬
+            sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
+            
+            # 경로의 고유성을 해시값으로 표현하여 확인
+            a_hash = tuple(hash_day(day) for day in sorted_a)
+            
+            # 고유한 해시값이 없는 경우만 결과에 추가
+            if a_hash not in seen_hashes:
+                seen_hashes.add(a_hash)
+                result.append(copy.deepcopy(a))
+    else:        
+        # 해시를 사용하여 중복 제거
+        result = []
+        seen_hashes = set()
+
+        while path_list:
+            a = path_list.pop()  # 원래 경로를 pop하여 가져옴
+            
+            # 각 하루치 경로를 위도(lat) 기준으로 정렬
+            sorted_a = [sorted(day, key=lambda place: place['lat']) for day in a]
+            
+            # 경로의 고유성을 해시값으로 표현하여 확인
+            a_hash = tuple(hash_day(day) for day in sorted_a)
+            
+            # 고유한 해시값이 없는 경우만 결과에 추가
+            if a_hash not in seen_hashes:
+                seen_hashes.add(a_hash)
+                result.append(copy.deepcopy(a))
     
-    try:
-        for idx, path in enumerate(path_list):
-            
-            geo_score_list.append(geo_efficiency(copy.deepcopy(path), place_score_avg_list[idx]))
-            popular_scores_list.append(popularity_stats(copy.deepcopy(path)))
-        div_score = diversity_score(copy.deepcopy(path_list))
-            
-        logger.info("평가 함수")
-        logger.info(place_score_avg_list)
-        logger.info(geo_score_list)
-        logger.info(div_score)
-        logger.info(popular_scores_list)
-        
-        result_eval = {
-            "place_score_avg_list":place_score_avg_list,
-            "geo_score_list":geo_score_list,
-            "diversity_score":div_score,
-            "popular_scores_list":popular_scores_list,            
-        }
-            
-    except Exception as e:
-        logger.error("평가 함수 중 에러 발생")
-        logger.error(traceback.format_exc())
-        geo_score_list = []
-        div_score = 0.0
-        popular_scores_list = []
-        result_eval = {}
-        
-        
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
     # for idx_result, path_result in enumerate(result):
     #    logger.info(f"최종 코스 결과 , {idx_result}")
@@ -179,7 +117,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     logger.info("최종 리턴하는 코스 수 : %s", str(len(result)))
 
 
-    return result, enough_place, result_eval
+    return result, enough_place
 
 def route_search_repeat(place_list, place_score_list, accomodation_list, essential_place_list, time_limit_list, params):
     n_day = params["n_day"]
@@ -194,7 +132,6 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
     time_limit_final_list = []
     enough_time_list = []
     filtered_multi_day_path = []
-    multi_day_place_idx_list = []
     
     # 날짜별 반복
     for i in range(n_day):
@@ -223,12 +160,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
 
         #각 날짜별 시간 계산하는 부분 종료
 
-        result, enough_place, place_score_list_not_in_path, place_idx_list, enough_time = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
-        try:
-            multi_day_place_idx_list += place_idx_list
-        except Exception as e:
-            logger.error("multi_day_place_idx_list")
-            logger.error(e)
+        result, enough_place, place_score_list_not_in_path, enough_time = route_search_for_one_day(accomodation_list[i], accomodation_list[i + 1], place_list, place_score_list_copy, place_score_list_not_in_path, essential_place_list, time_limit, params, i)
 
         # 각 날마다 장소 리스트를 깊은 복사: 각 날의 탐색은 독립적이어야 하므로, place_score_list_not_in_path를 각 날마다 깊은 복사해야 합니다.
         place_score_list_not_in_path_copy = copy.deepcopy(place_score_list_not_in_path)
@@ -267,7 +199,7 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         else:
             result_path.append(multi_day_path[i])
     
-    return result_path, multi_day_place_idx_list, enough_place, clustering_ok
+    return result_path, enough_place, clustering_ok
 
 def route_search_for_one_day(accomodation1, accomodation2, place_list, place_score_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day):
     transit = params["transit"]
@@ -277,7 +209,7 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
         logger.info(f"관광지가 부족할 경우 (2) / 관광지 갯수 : {len(place_score_list)}")
 
         params["enough_place"] = False
-        return [], params["enough_place"], place_score_list_not_in_path, [], False
+        return [], params["enough_place"], place_score_list_not_in_path, False
     
     # 코스 초안을 만드는 그리디 알고리즘 부분
     path, time_coast, score_sum, place_idx_list, enough_place = initialize_greedy(accomodation1, place_list, place_score_list_not_in_path, essential_place_list, time_limit, params, day)
@@ -295,13 +227,13 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     # 남은 관광지가 없을 경우 힐클라이밍 건너뛰고 tsp만하고 리턴
     if len(place_score_list_not_in_path) <= 0:
         path, _ = tsp(path)
-        return path, params["enough_place"], place_score_list_not_in_path, place_idx_list, False
+        return path, params["enough_place"], place_score_list_not_in_path, False
         
     
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴 -> path = []
     elif len(place_idx_list) == 0:
         logger.info("시간 제한이 너무 짧아 greedy 에서 관광지 추가를 못한 경우 - 바로 리턴")
-        return path, enough_place, place_score_list_not_in_path, place_idx_list, False
+        return path, enough_place, place_score_list_not_in_path, False
         
         
     path, idx_list, enough_place = copy.deepcopy(hill_climb(place_list, place_score_list_not_in_path, place_idx_list, path, params))
@@ -329,4 +261,4 @@ def route_search_for_one_day(accomodation1, accomodation2, place_list, place_sco
     #         #place_score_list_not_in_path.append(copy.deepcopy([idx[0],idx[1],idx[2]]))
     #         #place_score_list_not_in_path.sort(key=lambda x: x[0])
 
-    return path, enough_place, place_score_list_not_in_path, place_idx_list, True
+    return path, enough_place, place_score_list_not_in_path, True

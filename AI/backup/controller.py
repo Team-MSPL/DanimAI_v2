@@ -146,7 +146,7 @@ async def ai_run(aiModel : AIModel):
     # resultData, bestPointList, enough_place = await run_blocking_io_function(args)  # 비동기로 실행
 
     # request_handler가 비동기 처리되도록 함
-    resultData, bestPointList, enough_place, result_eval = await request_handler(
+    resultData, bestPointList, enough_place = await request_handler(
         place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
         time_limit_array, n_day, transit, distance_sensitivity, popular_sensitivity, bandwidth, version
     )
@@ -157,33 +157,6 @@ async def ai_run(aiModel : AIModel):
         return {"status" : "failed",
                 "message": '코스 제작 중 에러 발생'
         }
-        
-    try:
-        from filelock import FileLock
-        import json
-        
-        result_eval['region'] = region_list
-        result_eval['select_list'] = select_list
-        result_eval['distance_sensitivity'] = distance_sensitivity
-        result_eval['popular_sensitivity'] = popular_sensitivity
-        result_eval['n_day'] = n_day
-        result_eval['transit'] = transit
-        result_eval['bandwidth'] = bandwidth
-        result_eval['enough_place'] = enough_place
-
-        def save_result_eval(result_eval, filepath="result_eval.json"):
-            lock_path = filepath + ".lock"
-            with FileLock(lock_path):
-                with open(filepath, "a", encoding="utf-8") as f:
-                    json.dump(result_eval, f, ensure_ascii=False)
-                    f.write("\n")
-                    
-        save_result_eval(result_eval, filepath="/home/ubuntu/result_eval.json")
-        
-    except Exception as e:
-        logger.error("평가 함수 저장 중 에러 발생")
-        logger.error(e)
-    
     return {
         "resultData" : resultData,
         "enoughPlace" : enough_place,

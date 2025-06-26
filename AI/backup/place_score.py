@@ -2,8 +2,6 @@ import numpy as np
 from ..common.constant import WEIGHT, RESULT_NUM, DISTANCE_BIAS
 from ..logging_config import logger
 import math
-from itertools import combinations
-from scipy.stats import skew
 
 def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, popular_sensitivity, version):
     try:
@@ -74,69 +72,3 @@ def haversine_distance(lat1, lng1, lat2, lng2):
     a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
-
-def geo_efficiency(path, total_score):
-
-    total_distance = 0
-
-    for idx, day in enumerate(path):
-        for i in range(len(day) - 1):
-            p1, p2 = day[i], day[i + 1]
-            dist = haversine_distance(p1['lat'], p1['lng'], p2['lat'], p2['lng'])
-            total_distance += dist
-        if idx < len(path) - 1:
-            p1, p2 = path[idx][-1], path[idx + 1][0]
-            dist = haversine_distance(p1['lat'], p1['lng'], p2['lat'], p2['lng'])
-            total_distance += dist
-        #total_score += sum(p.get('score', 0) for p in day)
-    logger.info("total_distance")
-    logger.info(total_distance)
-
-    return round(total_score / total_distance, 4) if total_distance else 0
-
-
-
-def diversity_score(all_path):
-    """
-    path: 2D list of dicts [{name, lat, lng, score}, ...] by date
-    """
-    def flatten_path(path):
-        return [place['name'] for day in path for place in day]
-    
-    n = len(all_path)
-    if n < 2:
-        return 1.0
-
-    total_jaccard = 0
-    count = 0
-
-    for a, b in combinations(all_path, 2):
-        set_a = set(flatten_path(a))
-        set_b = set(flatten_path(b))
-        intersection = set_a & set_b
-        union = set_a | set_b
-        jaccard = len(intersection) / len(union) if union else 0
-        total_jaccard += jaccard
-        count += 1
-
-    average_similarity = total_jaccard / count
-    return round(1 - average_similarity, 4)
-
-def popularity_stats(path):
-    """
-    path: 2D list of dicts [{name, lat, lng, score, popular}, ...] by date
-    """
-    popular_list = [place['popular'] for day in path for place in day if 'popular' in place]
-
-    if not popular_list:
-        return {'mean': 0, 'std': 0, 'skew': 0}
-
-    mean_pop = np.mean(popular_list)
-    std_pop = np.std(popular_list)
-    skew_pop = skew(popular_list)
-
-    return {
-        'mean': round(mean_pop, 2),
-        'std': round(std_pop, 2),
-        'skew': round(skew_pop, 2)
-    }
