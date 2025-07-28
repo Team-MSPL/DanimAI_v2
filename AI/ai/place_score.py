@@ -89,8 +89,8 @@ def geo_efficiency(path, total_score):
             dist = haversine_distance(p1['lat'], p1['lng'], p2['lat'], p2['lng'])
             total_distance += dist
         #total_score += sum(p.get('score', 0) for p in day)
-    logger.info("total_distance")
-    logger.info(total_distance)
+    # logger.info("total_distance")
+    # logger.info(total_distance)
 
     return round(total_score / total_distance, 4) if total_distance else 0
 
@@ -133,7 +133,10 @@ def popularity_stats(path):
 
     mean_pop = np.mean(popular_list)
     std_pop = np.std(popular_list)
-    skew_pop = skew(popular_list)
+    skew_pop = 0  # or np.nan
+    
+    if std_pop >= 1e-8:
+        skew_pop = skew(popular_list)
 
     return {
         'mean': round(mean_pop, 2),

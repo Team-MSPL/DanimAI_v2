@@ -61,8 +61,8 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
                 # 평균 계산
                 average = sum(values) / len(values)
 
-                logger.info("평균")
-                logger.info(average)
+                # logger.info("평균")
+                # logger.info(average)
                 place_score_avg_list.append(average)
                 
                 # diversity_score, geo_efficiency, place_score_avg, popular_dev 기반 강화학습 예정
@@ -139,8 +139,10 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     
     result_eval = {}
     
+    result_copy = copy.deepcopy(result)
+    
     try:
-        for idx, path in enumerate(path_list):
+        for idx, path in enumerate(result):
             
             geo_score_list.append(geo_efficiency(copy.deepcopy(path), place_score_avg_list[idx]))
             popular_scores_list.append(popularity_stats(copy.deepcopy(path)))
@@ -158,6 +160,21 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             "diversity_score":div_score,
             "popular_scores_list":popular_scores_list,            
         }
+        
+                
+        # place_score_avg_list와 result를 함께 (점수 기준) 내림차순 정렬
+        combined = list(zip(place_score_avg_list, result))
+
+        # 점수 내림차순 정렬
+        combined_sorted = sorted(combined, key=lambda x: x[0], reverse=True)
+
+        # 분리하면서 깊은 복사 수행
+        #place_score_avg_list_sorted = [copy.deepcopy(item[0]) for item in combined_sorted]
+        result_sorted = [copy.deepcopy(item[1]) for item in combined_sorted]
+
+        # 기존 리스트 대신 새 리스트로 교체 X - 저장은 소트 안해도 되게 - 시간 절약
+        # place_score_avg_list = place_score_avg_list_sorted
+        result = copy.deepcopy(result_sorted)
             
     except Exception as e:
         logger.error("평가 함수 중 에러 발생")
@@ -166,6 +183,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         div_score = 0.0
         popular_scores_list = []
         result_eval = {}
+        result = copy.deepcopy(result_copy)       
         
         
     # 최종 결과 결과 프린트 - 평시에는 주석 처리할 것
