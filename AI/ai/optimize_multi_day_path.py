@@ -347,9 +347,14 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
     
     len_places_to_cluster2 = len(places_to_cluster) 
     essential_count_list_count_zero = essential_count_list.count(0) 
+    place_num_avg2 = len_places_to_cluster2 // essential_count_list_count_zero
+    
+    # 소숫점 첫째자리가 5이상이면 +2, 아니면 +1
+    max_cluster_size2 = place_num_avg2 + 2 if int(len_places_to_cluster2 / essential_count_list_count_zero * 10) % 10 >= 5 else place_num_avg + 1
+    
     
     if essential_count_list.count(0) > 0:
-        clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), all_place_num_avg, max_cluster_size)
+        clustered_places, clustering_ok = cluster_with_hdbscan(places_to_cluster, essential_count_list.count(0), place_num_avg2, max_cluster_size2)
         
     clustered_places_copy = copy.deepcopy(clustered_places)
 
@@ -380,6 +385,8 @@ def optimize_multi_day_path(multi_day_path, time_limit_list, move_time, place_li
                 logger.error(place_num_avg)
                 logger.error("all_place_num_avg")
                 logger.error(all_place_num_avg)
+                logger.error("place_num_avg2")
+                logger.error(place_num_avg2)
                 logger.error("essential_count_list_count_zero")
                 logger.error(essential_count_list_count_zero)
                 return multi_day_path, False
