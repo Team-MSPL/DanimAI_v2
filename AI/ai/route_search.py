@@ -75,8 +75,9 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             if len_place_score_avg_list == len(place_score_avg_list):
                 place_score_avg_list.append(0)                
 
-            path_list.append(result)
-            clustering_ok_list.append(clustering_ok)
+            if len(result) > 0:
+                path_list.append(result)
+                clustering_ok_list.append(clustering_ok)
         except Exception as error:
             logger.error(f"코스를 만드는 중에 에러 발생 :, {error}")
             logger.error(traceback.format_exc())
@@ -129,7 +130,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             result.append(copy.deepcopy(a))
             new_place_score_avg_list.append(place_score_avg_list[idx])
         else:
-            logger.info(f"중복 제거 : {a}")
+            logger.info(f"중복 제거 : {idx}번째 코스")
     place_score_avg_list = copy.deepcopy(new_place_score_avg_list)
             
             
@@ -148,11 +149,11 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             popular_scores_list.append(popularity_stats(copy.deepcopy(path)))
         div_score = diversity_score(copy.deepcopy(path_list))
             
-        logger.info("평가 함수")
-        logger.info(place_score_avg_list)
-        logger.info(geo_score_list)
-        logger.info(div_score)
-        logger.info(popular_scores_list)
+        # logger.info("평가 함수")
+        # logger.info(place_score_avg_list)
+        # logger.info(geo_score_list)
+        # logger.info(div_score)
+        # logger.info(popular_scores_list)
         
         result_eval = {
             "place_score_avg_list":place_score_avg_list,
@@ -262,14 +263,17 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
         enough_time_list.append(enough_time)
         
         if not params["enough_place"]:
-            if len(multi_day_path[-1]) == 0:
+            if multi_day_path and len(multi_day_path[-1]) == 0:
                 multi_day_path.pop()
                 enough_time_list.pop()
-            if len(filtered_multi_day_path[-1]) == 0:
+            if filtered_multi_day_path and len(filtered_multi_day_path[-1]) == 0:
                 filtered_multi_day_path.pop()
             break
         
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가 를 못한 경우 처리 - day_path 중 하나는 [] 또는 숙소만 있을 거임
+    if  len(filtered_multi_day_path[0]) == 0:
+        return [], [], False, False
+        
 
     if len(filtered_multi_day_path) > 0:
         filtered_multi_day_path, clustering_ok = optimize_multi_day_path(filtered_multi_day_path, time_limit_final_list, params["move_time"], place_list, place_score_list_not_in_path)

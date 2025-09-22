@@ -8,6 +8,7 @@ from python_tsp.heuristics import solve_tsp_local_search
 def tsp(path):
     if len(path) == 0:
         logger.error(f"tsp에서 path가 0임 - 상황 체크 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+        return path, 0
     
     if len(path) == 1:
         return path, 0
