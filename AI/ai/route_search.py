@@ -56,16 +56,23 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
             len_place_score_avg_list = len(place_score_avg_list)
             
             try:
-                values = [x[0] if len(x) > 0 else 0 for x in multi_day_place_idx_list]
-
-                # 평균 계산
-                average = sum(values) / len(values)
-
-                # logger.info("평균")
-                # logger.info(average)
-                place_score_avg_list.append(average)
+                if len(multi_day_place_idx_list) == 0:
+                    logger.error("multi_day_place_idx_list is empty, skipping average calculation.")
+                    logger.error(accomodation_list)
+                    logger.error(essential_place_list)
+                    logger.error(theme_matrix)
                 
-                # diversity_score, geo_efficiency, place_score_avg, popular_dev 기반 강화학습 예정
+                else:
+                    values = [x[0] if len(x) > 0 else 0 for x in multi_day_place_idx_list]
+
+                    # 평균 계산
+                    average = sum(values) / len(values)
+
+                    # logger.info("평균")
+                    # logger.info(average)
+                    place_score_avg_list.append(average)
+                    
+                    # diversity_score, geo_efficiency, place_score_avg, popular_dev 기반 강화학습 예정
                 
             except Exception as e:
                 logger.error("place_score_avg_list")
@@ -271,8 +278,9 @@ def route_search_repeat(place_list, place_score_list, accomodation_list, essenti
             break
         
     # 시간 제한이 너무 짧아 greedy 에서 관광지 추가 를 못한 경우 처리 - day_path 중 하나는 [] 또는 숙소만 있을 거임
-    if  len(filtered_multi_day_path[0]) == 0:
+    if not filtered_multi_day_path or not filtered_multi_day_path[0]:
         return [], [], False, False
+
         
 
     if len(filtered_multi_day_path) > 0:

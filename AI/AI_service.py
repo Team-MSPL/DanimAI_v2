@@ -29,6 +29,16 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
                 select_list[idx][idx2] = -1
     
     if version == 3:
+        if len(select_list[0]) != 7:
+            logger.error(select_list)
+        if len(select_list[1]) != 6:
+            logger.error(select_list)
+        if len(select_list[2]) != 6:
+            logger.error(select_list)
+        if len(select_list[3]) != 11:
+            logger.error(select_list)
+        if len(select_list[4]) != 4:
+            logger.error(select_list)
         # 최대 길이 9 -> 11로 변경
         theme_matrix = np.array([
             select_list[0] + [0, 0, 0, 0],
