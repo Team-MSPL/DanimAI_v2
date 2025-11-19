@@ -40,9 +40,9 @@ class FirebaseAccess():
         db = self.db
         all_place_map = {}
         place_feature = []
-        try:
-            idx = 0
-            for r_index, r in enumerate(region):
+        idx = 0
+        for r_index, r in enumerate(region):
+            try:
                 # "관광지 목록" 문서는 제외
                 place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
                 #place_snapshot = db.collection("해외").document("Vietnam").collection("닌빈").where(filter=FieldFilter("name", "!=", '관광지목록')).get()
@@ -54,6 +54,13 @@ class FirebaseAccess():
                     #반려견과 선택시 placeList에서 먼저 제거 - 240123
                     if select_list[0][6] == 1 and data["partner"][6] == 0:
                         continue
+                    
+                    
+                    try:
+                        data["takenTime"] = parse_korean_time(data["takenTime"])
+                    except Exception as e:
+                        logger.error(f"takenTime 변환 오류: {data['name']}, 값: {data['takenTime']}, {e}")
+
 
                     #여유로운 여행이면 takenTime 60분 추가 - 241205
                     if bandwidth:
@@ -120,7 +127,45 @@ class FirebaseAccess():
                         place_feature = feature
                     else:
                         place_feature = np.append(place_feature, feature, axis=0)    # Deep Copy가 된다는 사실 확인하였음
-        except Exception as error:
-            logger.error(f"관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:, {error}")
+            except Exception as error:
+                logger.error(f"관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:, {error}")
+                continue  # 다음 관광지 계속 진행
 
         return all_place_map, place_feature
+    
+import re
+
+def parse_korean_time(text):
+    """
+    '2일', '3시간', '1시간 30분', '45분' 등을 분 단위(int)로 변환
+    """
+
+    if isinstance(text, int) or isinstance(text, float):
+        return int(text)
+
+    if not isinstance(text, str):
+        return 0
+
+    text = text.strip()
+
+    days = hours = minutes = 0
+
+    # 패턴 매칭
+    day_match = re.search(r'(\d+)\s*일', text)
+    hour_match = re.search(r'(\d+)\s*시간', text)
+    minute_match = re.search(r'(\d+)\s*분', text)
+
+    if day_match:
+        days = int(day_match.group(1))
+    if hour_match:
+        hours = int(hour_match.group(1))
+    if minute_match:
+        minutes = int(minute_match.group(1))
+
+    total_minutes = days * 24 * 60 + hours * 60 + minutes
+    
+    # 최대 6시간만 가능하게 세팅
+    if total_minutes > 360:
+        total_minutes = 360
+        
+    return total_minutes
