@@ -1,12 +1,22 @@
 import numpy as np
 from ..common.constant import WEIGHT, RESULT_NUM, DISTANCE_BIAS
+from .BO.constant_template import build_constants_from_params
 from ..logging_config import logger
 import math
 from itertools import combinations
 from scipy.stats import skew
 
 def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, popular_sensitivity, version):
-    try:
+    try:      
+        # WEIGHT는 2차원 배열 → numpy로 변환 후 수정
+        weight = np.array(WEIGHT)
+        distanceBias = np.array(DISTANCE_BIAS)
+        
+        # RL된 가중치
+        WEIGHT2, DISTANCE_BIAS2 = build_constants_from_params()
+        weight = np.array(WEIGHT2)
+        distanceBias = np.array(DISTANCE_BIAS2)
+        
         max_tendency_len = 9
         if version == 3:
             max_tendency_len = 11
@@ -15,8 +25,6 @@ def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_
         # 인기도 가중치 매핑: -25 ~ 75
         mapped_tail_weight = -25 + (popular_sensitivity / 10) * 100
 
-        # WEIGHT는 2차원 배열 → numpy로 변환 후 수정
-        weight = np.array(WEIGHT)
 
         try:
             # 맨 뒤 5번째 항목(인덱스 4)을 사용자 기반 값으로 덮어쓰기
@@ -27,7 +35,6 @@ def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_
         weight = weight.reshape(1, RESULT_NUM, 5)
         weight = np.repeat(weight, max_tendency_len, axis=0)
         weight = np.transpose(weight, (1, 2, 0))
-        distanceBias = np.array(DISTANCE_BIAS)
         # distanceBias = weight * theme_matrix
         # distanceBias = np.sum(distanceBias, axis=2)
         # distanceBias = np.sum(distanceBias, axis=1)
@@ -40,7 +47,15 @@ def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_
         for w in weight:
             score = preference_list * w
             score = np.sum(score, axis=2)
-            score = score / selected_theme_num_list
+            
+            
+            # “테마 개수”로 나누지 말고 “활성 테마 비율”로 나누기
+            effective_weight = selected_theme_num_list / max_tendency_len
+            score = score / effective_weight            
+            #score = score / selected_theme_num_list
+            
+            
+            
             score = np.nan_to_num(score)    # nan -> 0 변환, 윗줄에서 0으로 나눠 아래 문제가 생기더라도 여기서 처리해 줌
             # /home/ubuntu/DanimAI_v2/AI/ai/place_score.py:21: RuntimeWarning: invalid value encountered in divide
             #   score = score / selected_theme_num_list
@@ -74,6 +89,15 @@ def haversine_distance(lat1, lng1, lat2, lng2):
     a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
+
+def normalize_scores(scores):
+    arr = np.array(scores, dtype=float)
+    min_v = np.min(arr)
+    max_v = np.max(arr)
+    if max_v - min_v < 1e-8:
+        return [0.5] * len(arr)
+    return ((arr - min_v) / (max_v - min_v)).tolist()
+
 
 def geo_efficiency(path, total_score):
 
@@ -138,8 +162,14 @@ def popularity_stats(path):
     if std_pop >= 1e-8:
         skew_pop = skew(popular_list)
 
-    return {
-        'mean': round(mean_pop, 2),
-        'std': round(std_pop, 2),
-        'skew': round(skew_pop, 2)
-    }
+    # return {
+    #     'mean': round(mean_pop, 2),
+    #     'std': round(std_pop, 2),
+    #     'skew': round(skew_pop, 2)
+    # }
+    
+    
+    
+    popularity_score = round(mean_pop, 2) * (1 + round(skew_pop, 2))
+    
+    return popularity_score
