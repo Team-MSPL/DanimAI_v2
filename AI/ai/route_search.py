@@ -9,7 +9,6 @@ from ..common.constant import RESULT_NUM, CAR_TRANSIT, PUBLIC_TRANSIT
 from .place_score import get_place_score_list, normalize_scores, geo_efficiency, diversity_score, popularity_stats
 from .optimize_multi_day_path import optimize_multi_day_path
 from .remove_intersections import remove_routes_with_intersections
-from .BO.optimize_weights import optimize_weights
 import traceback
 from ..logging_config import logger
 from ..common.constant import OVER_TIME, UNDER_TIME
@@ -196,11 +195,6 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
         # 기존 리스트 대신 새 리스트로 교체 X - 저장은 소트 안해도 되게 - 시간 절약
         # place_score_avg_list = place_score_avg_list_sorted
         result = copy.deepcopy(result_sorted)
-        
-        # 강화학습
-        best_params = optimize_weights(result_eval)
-        logger.info("best_params")
-        logger.info(best_params)
             
     except Exception as e:
         logger.error("평가 함수 중 에러 발생")

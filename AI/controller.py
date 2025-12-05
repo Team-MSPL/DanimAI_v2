@@ -12,6 +12,7 @@ from .firebase.firebaseAccess import FirebaseAccess
 from concurrent.futures import ProcessPoolExecutor
 from .logging_config import logger
 from .remake_tendency import remakeTendency
+from .ai.BO.optimize_weights import optimize_weights
 
 # 숙소 및 필수여행지 input값을 추가하고자 할 때 여기 수정
 class AccomodationListItem(BaseModel):
@@ -162,14 +163,27 @@ async def ai_run(aiModel : AIModel):
         from filelock import FileLock
         import json
         
-        result_eval['region'] = region_list
-        result_eval['select_list'] = select_list
-        result_eval['distance_sensitivity'] = distance_sensitivity
-        result_eval['popular_sensitivity'] = popular_sensitivity
-        result_eval['n_day'] = n_day
-        result_eval['transit'] = transit
-        result_eval['bandwidth'] = bandwidth
-        result_eval['enough_place'] = enough_place
+        user_context = {}
+        
+        user_context.update({
+            "region": region_list,
+            "select_list": select_list,
+            "distance_sensitivity": distance_sensitivity,
+            "popular_sensitivity": popular_sensitivity,
+            "n_day": n_day,
+            "transit": transit,
+            "bandwidth": bandwidth,
+            "enough_place": enough_place,
+        })        
+        
+        # 강화학습
+        best_params = optimize_weights(result_eval, user_context)
+        logger.info("best_params")
+        logger.info(best_params)
+        
+        
+        # 객체 합치기
+        result_eval = result_eval | user_context
 
         def save_result_eval(result_eval, filepath="result_eval.json"):
             lock_path = filepath + ".lock"

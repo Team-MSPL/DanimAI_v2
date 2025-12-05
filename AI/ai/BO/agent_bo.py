@@ -10,9 +10,9 @@ class BOAgent:
         params = self.optimizer.ask()
         return params
 
-    def update(self, params, reward):
+    def update(self, params, reward, user_context):
         self.optimizer.tell(params, -reward)  # reward가 높을수록 좋도록 -reward
-        self.past.append({"params": params, "reward": reward})
+        self.past.append({"params": params, "reward": reward, "context": user_context})
 
     def best(self):
         return max(self.past, key=lambda x: x["reward"])

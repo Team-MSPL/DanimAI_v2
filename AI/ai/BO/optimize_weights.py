@@ -22,10 +22,29 @@ from .rl_runner import CourseRL
 from .constant_template import save_params
 
 #def optimize_weights():
-def optimize_weights(result_eval):
+def optimize_weights(result_eval, user_context):
+    """      
+        result_eval = {
+            "place_score_avg_list":place_score_avg_list,
+            "geo_score_list":geo_score_list,
+            "diversity_score":div_score,
+            "popular_scores_list":popular_scores_list,            
+        }
+        user_context.update({
+            "region": region_list,
+            "select_list": select_list,
+            "distance_sensitivity": distance_sensitivity,
+            "popular_sensitivity": popular_sensitivity,
+            "n_day": n_day,
+            "transit": transit,
+            "bandwidth": bandwidth,
+            "enough_place": enough_place,
+        })
+
+    """
 
     # ----------- 예외 처리 -----------
-    if not result_eval or len(result_eval) == 0:
+    if not result_eval or not result_eval['place_score_avg_list'] or len(result_eval['place_score_avg_list']) == 0:
         print("[WARN] result_eval is empty. Skipping optimization...")
 
         # 디폴트 파라미터 반환
@@ -51,7 +70,7 @@ def optimize_weights(result_eval):
 
     rl = CourseRL(reward_fn)
 
-    history = rl.run(agent, result_eval, episodes=40)
+    history = rl.run(agent, result_eval, user_context, episodes=40)
 
     # 최적 결과 보고 (BOOptimizer 내부 값 확인)
     best = agent.best()
@@ -61,8 +80,8 @@ def optimize_weights(result_eval):
     print(best)
     best_params = best["params"]
     
-    # 저장
-    save_params(best_params)
+    # 사용자 조건별로 저장
+    save_params(best_params, user_context)
 
     return best_params
 

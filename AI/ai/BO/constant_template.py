@@ -1,6 +1,7 @@
 # constant_template.py
 """
 constant.py를 RL/BO가 override할 수 있도록 템플릿 형태로 분리
+user_context별로 weight를 저장/로드 가능하도록 수정
 
 1. 강화 학습 (RL), 2. 베이지안 최적화 (BO)
 
@@ -22,7 +23,44 @@ import os
 RESULT_NUM = 7
 STORE_PATH = "./best_params.json"
 
-def build_constants_from_params():
+# -------------------------------
+# 범주화(Binning) 함수
+# -------------------------------
+def bin_sensitivity(value):
+    if value is None:
+        return "none"
+    if value <= 3:
+        return "LOW"
+    if value <= 6:
+        return "MID"
+    return "HIGH"
+def n_day_sensitivity(value):
+    if value is None:
+        return "none"
+    if value <= 2:
+        return "SHORT"
+    if value <= 5:
+        return "MID"
+    return "LONG"
+
+# -------------------------------
+# 키 생성: region + DIS_BIN + POP_BIN + n_day
+# -------------------------------
+def make_context_key(user_context):
+    region = "_".join(user_context.get("region", [])) if isinstance(user_context.get("region"), list) else user_context.get("region", "none")
+    
+    dist = bin_sensitivity(user_context.get("distance_sensitivity"))
+    pop  = bin_sensitivity(user_context.get("popular_sensitivity"))
+    nday = n_day_sensitivity(user_context.get("n_day", "none"))
+
+    return f"{region}_{dist}_{pop}_{nday}"
+
+
+# -------------------------------
+# build_constants_from_params
+# (user_context 필요!)
+# -------------------------------
+def build_constants_from_params(user_context):
     """
     params: dict
       {
@@ -31,7 +69,7 @@ def build_constants_from_params():
       }
     """
     
-    params = load_params()
+    params = load_params(user_context)
     if params is None:
         #default_params
         params = {
@@ -51,15 +89,39 @@ def build_constants_from_params():
 
     return WEIGHT, DISTANCE_BIAS
 
-def load_params():
+# -------------------------------
+# load_params (context별)
+# -------------------------------
+def load_params(user_context):
+    key = make_context_key(user_context)
+
     if not os.path.exists(STORE_PATH):
         return None
+
     try:
-        with open(STORE_PATH, "r") as f:
-            return json.load(f)
+        with open(STORE_PATH, "r", encoding="utf-8") as f:
+            db = json.load(f)
     except:
         return None
 
-def save_params(params):
-    with open(STORE_PATH, "w") as f:
-        json.dump(params, f, indent=2)
+    return db.get(key, None)
+
+
+# -------------------------------
+# save_params (context별 저장)
+# -------------------------------
+def save_params(params, user_context):
+    key = make_context_key(user_context)
+
+    db = {}
+    if os.path.exists(STORE_PATH):
+        try:
+            with open(STORE_PATH, "r", encoding="utf-8") as f:
+                db = json.load(f)
+        except:
+            db = {}
+
+    db[key] = params
+
+    with open(STORE_PATH, "w", encoding="utf-8") as f:
+        json.dump(db, f, indent=2, ensure_ascii=False)

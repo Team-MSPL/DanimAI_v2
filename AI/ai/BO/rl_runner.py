@@ -4,7 +4,7 @@ class CourseRL:
         #self.env_fn = env_fn
         self.reward_fn = reward_fn
 
-    def run(self, agent, result_eval, episodes=30):
+    def run(self, agent, result_eval, user_context, episodes=30):
         history = []
 
         for ep in range(episodes):
@@ -15,7 +15,7 @@ class CourseRL:
             # env_fn 대신 result_eval 직접 입력받게
 
             # 보상 계산
-            reward = self.reward_fn(result_eval)
+            reward = self.reward_fn(result_eval, user_context)
 
             # agent 업데이트
             agent.update(params, reward)
