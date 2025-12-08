@@ -25,7 +25,7 @@ def hash_day(day):
 
 pp = pprint.PrettyPrinter()
 
-def route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_list, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, version):
+def route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_list, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, user_context, version):
     selectedThemeNum_list = np.count_nonzero(theme_matrix, axis=1)
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
     
@@ -34,7 +34,7 @@ def route_search_main(place_list, place_feature_matrix, accomodation_list, theme
     enough_place = True
 
     # 미리 스코어 계산하여 리스트화 + distance_bias는 원래 코드 123줄 즈음에 있는 ((10 - distanceSensitivityInAI) * 15) * sumForDistance를 계산한 것
-    place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, version)
+    place_score_list, distance_bias = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, user_context, version)
     #이때까지는 list의 인덱스가 list 에서 id
 
     path_list = []

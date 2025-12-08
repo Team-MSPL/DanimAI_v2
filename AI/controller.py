@@ -140,7 +140,19 @@ async def ai_run(aiModel : AIModel):
 
     fb = FirebaseAccess()
     place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth, version)
+        
+    user_context = {}
     
+    user_context.update({
+        "region": region_list,
+        "select_list": select_list,
+        "distance_sensitivity": distance_sensitivity,
+        "popular_sensitivity": popular_sensitivity,
+        "n_day": n_day,
+        "transit": transit,
+        "bandwidth": bandwidth,
+        "enough_place": enough_place,
+    })      
     
     # # blocking I/O 작업을 실행
     # args = (place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list, time_limit_array, n_day, transit, distance_sensitivity, bandwidth)
@@ -149,7 +161,7 @@ async def ai_run(aiModel : AIModel):
     # request_handler가 비동기 처리되도록 함
     resultData, bestPointList, enough_place, result_eval = await request_handler(
         place_map, place_feature_matrix, accomodation_list, select_list, essenstial_place_list,
-        time_limit_array, n_day, transit, distance_sensitivity, popular_sensitivity, bandwidth, version
+        time_limit_array, n_day, transit, distance_sensitivity, popular_sensitivity, bandwidth, user_context, version
     )
 
     end = time.time()
@@ -161,20 +173,7 @@ async def ai_run(aiModel : AIModel):
         
     try:
         from filelock import FileLock
-        import json
-        
-        user_context = {}
-        
-        user_context.update({
-            "region": region_list,
-            "select_list": select_list,
-            "distance_sensitivity": distance_sensitivity,
-            "popular_sensitivity": popular_sensitivity,
-            "n_day": n_day,
-            "transit": transit,
-            "bandwidth": bandwidth,
-            "enough_place": enough_place,
-        })        
+        import json     
         
         # 강화학습
         best_params = optimize_weights(result_eval, user_context)
@@ -245,9 +244,23 @@ async def recommend_place(model: RecommendPlaceModel):
     place_map, place_feature_matrix = await fb.read_all_place(region_list, select_list, bandwidth, version)
     
     place_list = list(place_map.values())
+    
+    
+    user_context = {}
+    
+    user_context.update({
+        "region": region_list,
+        "select_list": select_list,
+        "distance_sensitivity": distance_sensitivity,
+        "popular_sensitivity": popular_sensitivity,
+        "n_day": 3, # TODO - 고정값, 필요시 수정
+        "transit": transit,
+        "bandwidth": bandwidth,
+    })      
+    
 
     # recommend_handler 호출하여 추천 결과 생성
-    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, popular_sensitivity, lat, lng, version, page, page_for_place)
+    recommended_places = await recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, popular_sensitivity, lat, lng, version, page, page_for_place, user_context)
 
     end = time.time()  # 실행 종료 시간 기록
     logger.info(end - start)

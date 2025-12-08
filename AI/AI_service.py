@@ -11,7 +11,7 @@ from .ai.place_score import get_place_score_list, haversine_distance
 from .common.constant import CAR_COEFF, PUBLIC_COEFF, MAX_DISTANCE_SENSITIVITY, RESULT_NUM
 from .logging_config import logger
 
-async def request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, popular_sensitivity, bandwidth, version):
+async def request_handler(place_list, place_feature_matrix, accomodation_list, select_list, essential_place_list, time_limit_array, n_day, transit, distance_sensitivity, popular_sensitivity, bandwidth, user_context, version):
     #fb = FirebaseAccess()
     
     #place_list, place_feature_matrix = fb.read_all_place(region_list, select_list, bandwidth)
@@ -60,7 +60,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
     place_list, place_feature_matrix, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list, place_feature_matrix, version)
     
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
-    result, enough_place, result_eval = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, version)
+    result, enough_place, result_eval = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, user_context, version)
 
     # 평균 점수 + 점수 보정 + 등수 계산         
     best_point_list = tendencyCalculate(result, select_list_copy, version)
@@ -71,7 +71,7 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
 
 
 
-async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, popular_sensitivity, lat, lng, version, page, page_for_place):
+async def recommend_handler(place_list, place_feature_matrix, select_list, transit, distance_sensitivity, popular_sensitivity, lat, lng, version, page, page_for_place, user_context):
     
     all_zero_flag = True
     
@@ -108,7 +108,7 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
 
     # 1-1. 전체 점수 계산
-    place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, version)
+    place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, user_context, version)
     
     dist_coef = CAR_COEFF if transit == 0 else PUBLIC_COEFF
     

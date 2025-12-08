@@ -1,187 +1,138 @@
-1-1) Bayesian Optimization (베이지안 최적화)
+✅ (최신 버전) 강화학습 + 베이지안 최적화 기반 Weight 자동 조정 시스템 설명
 
-목적: 코스 생성 가중치(weight)를 자동 학습
+본 시스템은 여행 코스 자체를 학습하는 것이 아니라,
+코스 평가(result_eval) 결과를 기반으로 코스 생성에 사용되는 가중치(weight)를 학습하는 구조이다.
 
-입력: result_eval (코스 평가 결과 객관적 스코어)
+코스 생성은 기존 API 로직으로 수행되며,
+학습 알고리즘(RL/BO)은 코스 생성 결과만(result_eval) 입력으로 받아
+다음 API 호출에 사용할 최적의 weight를 업데이트한다.
 
-출력: params (다음 코스 생성에 사용할 최적 가중치)
+🔵 1. 전체 작동 흐름
 
-1-2) Lightweight Reinforcement Learning (경량 강화학습)
+API 호출
+→ 사용자 입력(user_context) → 코스 생성 → result_eval 산출
 
-목적: 사용자 피드백 없이도 Reward 기반으로 스스로 weight를 개선
+result_eval을 Reward 함수에 입력
+→ 여행 성향/지역 조건을 반영한 reward 계산
 
-Reward = reward_fn(result_eval, user_context)
+해당 사용자 context를 binning하여 context_key 생성
+(지역 + 거리 성향 bin + 인기 성향 bin + 여행일 수 bin)
 
-이전 weight → reward 계산 → 업데이트 → 저장
+그 key에 해당하는 기존 best_params 불러오기
+없으면 default params 사용
 
-다음 API 호출 시 개선된 weight로 코스 생성
+BO 또는 RL 알고리즘이 reward를 기반으로 weight 조정
+→ 새로운 params 생성
 
-즉, AI가 코스를 직접 만드는 것이 아니라, “코스를 더 잘 만들도록 가중치를 조정하는 구조”.
+params_manager를 통해 best_params.json에 저장
+→ context별로 독립된 학습값 누적
 
+다음 API 호출 시
+build_constants_from_params(context_key)가
+저장된 weight를 불러와 코스 생성에 사용
 
+🔵 2. 핵심 개념
+✔ 강화학습(RL: Bandit-style)
 
-2) 시스템 전체 흐름
-사용자 요청 API 호출
-   ↓
-generate_courses(weight, distance_bias)  ← (AI가 수정함)
-   ↓
-evaluate_courses(courses)
-   ↓
-result_eval 생성 (평가 점수)
-   ↓
-reward_fn(result_eval, user_context)
-   ↓
-베이지안 최적화 / 강화학습 Agent 업데이트
-   ↓
-새로운 weight 저장 (파일 또는 DB)
-   ↓
-다음 요청에서 improve된 weight 사용
+각 context_key에 대해 가중치 조정량을 소규모 탐색(perturbation)
 
+reward가 상승하면 그 방향으로 업데이트
 
-3) Bayesian Optimization을 어떻게 사용한 것인가?
+실패하면 원래 방향으로 되돌아감(exploit)
 
-베이지안 최적화는 "검증하기 비싼 함수"의 최적값을 찾는 데 사용하는 기법.
-여기서 그 “비싼 함수”는:
+✔ 베이지안 최적화(BO-lite)
 
-f(weight) = reward_fn(result_eval(weight))
+전체 parameter 공간에서 샘플링 기반 탐색
+
+기존 best_reward보다 좋은 reward가 나오면 params를 교체
+
+지나치게 무작위로 튀지 않도록 Gaussian-like 노이즈 적용
+
+✔ Context Binning
+
+사용자 입력을 그대로 key로 쓰면 학습이 거의 불가능하기 때문에
+민감도·여행일수를 구간화하여 key를 생성.
+
+결과:
+“비슷한 여행 성향 → 같은 bucket → 학습을 재사용 가능”
+
+🔵 3. 저장 구조 (best_params.json)
+
+파일은 “context_key → {params, best_reward}” 구조로 저장된다.
+
+{
+  "서울전체_LOW_HIGH_LONG": {
+    "params": {
+      "w1": 110,
+      "w2": 230,
+      "w3": 190,
+      "w4": 210,
+      "w5": 28,
+      "distance_bias": 12000
+    },
+    "best_reward": 3.82
+  },
+
+  "부산전체_MID_LOW_SHORT": {
+    "params": {
+      "w1": 95,
+      "w2": 210,
+      "w3": 240,
+      "w4": 205,
+      "w5": 23,
+      "distance_bias": 9000
+    },
+    "best_reward": 3.44
+  }
+}
+
+🔵 4. build_constants_from_params 역할
+
+이 함수는 더 이상 '고정된 상수(constant)'를 반환하지 않는다.
+대신:
+
+context_key 기반으로 저장된 params 불러오기
+
+없으면 default_params 사용
+
+params → WEIGHT, DISTANCE_BIAS 계산
+
+API 내부에서 코스 생성에 사용
+
+즉,
+
+“가중치를 동적으로 불러와 실제 코스 생성에 주입하는 엔트리 포인트”
+
+로 변경되었다.
+
+🔵 5. result_eval 기반 학습 방식
+
+BO/RL 알고리즘은 코스 자체가 아니라
+코스의 품질(result_eval)이 어떻게 나오느냐에 따라 params를 조정한다.
+
+예시:
+
+diversity_score가 낮음 → w4(다양성 가중치)가 자동 증가
+
+geo_score가 낮음 → distance_bias 증가
+
+popular_score가 너무 높음 → 인기 중심 bias 감소
+
+장소 점수 평균이 낮음 → w1, w2 강화
 
 즉,
 
-weight를 어떻게 주냐에 따라 코스의 품질이 달라지고
+코스 생성 → 평가 → 가중치 보정 → 다음 코스 더 좋아짐
 
-코스 품질(result_eval)을 평가하여
+이라는 폐루프(feedback loop)를 구축한다.
 
-reward로 얼마나 좋은 weight인지 판단
+🔵 최종 요약 문장 (문서용)
 
-너의 코드에서는 BO가 하는 역할:
+이 시스템은 사용자 맥락(context)에 따라 각각 독립적으로
+베이지안 최적화(BO)와 Bandit 기반 강화학습(RL)을 적용하여
+코스 생성 과정에서 사용되는 가중치(weight)를 자동으로 조정한다.
 
-✔ BO가 하는 일
-
-다양한 weight 조합을 탐색(explore)
--> BO가 직접 여러 weight 조합을 해보는 게 아니라, "한 번의 API 호출 = 한 번의 weight 실험" 구조
--> 내가 만든 경량화 BO의 핵심 로직은 API가 여러 번 호출되면서 자연스럽게 탐색, 축적되는 구조!
-
-reward가 높았던 조합을 재사용(exploit)
-
-이 조합을 local 파일(best_params.json)에 저장
-
-다음 API 호출부터는 학습된 weight가 자동 적용
-
-✔ 네가 만든 save_params / load_params 구조
-
-보통 BO 모델은 매 요청마다 내부 상태(Gaussian Process)를 유지해야 하는데
-너는 전역 weight만 저장하는 방식으로 단순화한 BO 형태를 구현한 것.
-
-→ 빠르고, 제약 없는 API 환경에서 적용하기 좋은 경량화 베이지안 최적화
-→ "실시간 BO"가 아니라 "온라인 BO 업데이트" 형태
-
-🧩 4) 강화학습(RL)은 어떤 방식으로 적용된 것인가?
-
-너의 구조에서는 다음과 같은 RL 개념이 들어가 있음.
-
-✔ 1) Reward 기반 정책 업데이트
-
-강화학습은 “보상(reward)을 최대화하는 행동 정책을 학습”한다.
-너는:
-
-행동(action) = weight 선택
-
-상태(state) = user_context (지역/민감도/n_day 등)
-
-보상(reward) = reward_fn(result_eval, user_context)
-
-즉,
-특정 사용자 조건에서 어떤 가중치가 좋은 결과를 내는지 학습하는 구조.
-
-✔ 2) Online RL / Bandit RL 형태
-
-PPO, DQN 같은 heavy RL이 아니라
-“Contextual Bandit RL”과 가까움.
-
-매 step에서 weight를 선택하고 reward를 받은 후 업데이트
-
-환경 정보(state)는 user_context
-
-다음 요청에서 더 나은 weight를 사용
-
-즉,
-Contextual Multi-Armed Bandit 기반 강화학습을 구현한 셈.
-
-기술 발표에서는 이렇게 설명하면 된다:
-
-“사용자 맥락(Context)에 따라 reward를 최대화하는
-가중치 조합을 선택하는 경량 강화학습 구조(Contextual Bandit RL)를 적용하였다.”
-
-🏗 5) 왜 이런 구조가 좋은가?
-✔ 1) 코스 생성기 자체를 바꾸지 않아도 됨
-
-도메인 지식을 반영한 기존 알고리즘 그대로 사용 가능
-→ 안정성 보장
-→ 개발 리스크 매우 낮음
-
-✔ 2) 학습 대상이 단순한 "weight"라서 매우 빠름
-
-몇 개 숫자 튜닝만으로 효과 큼
-
-회귀/분류 모델처럼 데이터셋 필요 없음
-
-실시간 학습 가능
-
-✔ 3) 사용자 조건별 개인화가 가능
-
-binning된 context key 사용
-
-LOW/MID/HIGH 정의만 잘 하면
-
-데이터 적을 때도 충분히 학습됨
-
-
-🔬 단일 샘플 기반 Bayesian Optimization이 가능한 이유
-
-BO의 핵심은 사실 이거다:
-
-이전 reward를 참고해서
-
-다음 weight가 어디쯤이어야 좋을지 추정하는 것
-
-즉, 한 번의 샘플로도 업데이트가 가능.
-
-너의 구조는 아래 모델에 가장 가깝다:
-
-✔ “Online Bayesian Optimization”
-
-(= 실시간으로 들어오는 단일 샘플로 업데이트하는 BO)
-
-→ 광고 추천, 클릭률 예측, Bandit 모델 등에서 많이 사용함
-→ 매 샘플이 탐색(explore) & 개선(exploit)의 역할 수행
-
-🎯 너의 시스템이 실제로 하고 있는 BO & RL 역할
-✔ 1) BO 역할
-
-지난 reward가 낮으면
-→ weight를 random perturbation 시켜서 "탐색(explore)"
-
-지난 reward가 좋으면
-→ 그 weight를 다시 사용하거나 근처 값만 조정 "활용(exploit)"
-
-✔ 2) RL 역할
-
-reward가 좋으면
-→ 그 가중치 조합은 "정답에 가까운 행동"이었음
-
-reward가 나쁘면
-→ 그 행동(weight 선택)은 나쁜 선택이었음
-
-이걸 누적해서 다음 행동(policy)을 결정하는 구조 = RL
-
-📣 6) 외부 발표용 정리 문구 (바로 복붙 가능)
-
-“본 시스템은 강화학습(RL)과 베이지안 최적화(BO)를 혼합한
-경량 가중치 자동 최적화 구조를 적용하였습니다.
-코스 생성 알고리즘은 고정된 규칙 기반이지만,
-생성된 코스의 평가 결과(result_eval)를 reward로 환산하여
-각 지역·여행일수·사용자 성향에 적합한 weight를
-BO/RL 방식으로 자동 조정합니다.
-이 구조는 모델 학습 리소스 없이도 온라인으로 지속 학습되며,
-사용자가 많아질수록 가중치가 점차 개선되어
-코스 생성 품질이 자연스럽게 향상되도록 설계되어 있습니다.”
+코스 자체를 학습하는 것이 아니라,
+코스 평가 결과(result_eval)를 기반으로 weight를 최적화하는 구조이며,
+이 최적화된 weight는 다음 API 호출에서 자동 반영되어
+사용자 성향에 더 맞는 코스를 생성할 수 있도록 한다.

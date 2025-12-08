@@ -1,21 +1,42 @@
 import numpy as np
 from ..common.constant import WEIGHT, RESULT_NUM, DISTANCE_BIAS
-from .BO.constant_template import build_constants_from_params
+from .BO.weight_manager import load_params_for_context
+from .BO.context_key import make_context_key
 from ..logging_config import logger
 import math
 from itertools import combinations
 from scipy.stats import skew
 
-def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, popular_sensitivity, version):
+def get_place_score_list(place_feature_matrix, theme_matrix, selected_theme_num_list, activated_theme_num, place_list, popular_sensitivity, user_context, version):
     try:      
         # WEIGHT는 2차원 배열 → numpy로 변환 후 수정
         weight = np.array(WEIGHT)
         distanceBias = np.array(DISTANCE_BIAS)
         
-        # RL된 가중치
-        WEIGHT2, DISTANCE_BIAS2 = build_constants_from_params()
-        weight = np.array(WEIGHT2)
-        distanceBias = np.array(DISTANCE_BIAS2)
+        # RL된 가중치       
+        # ----------------------------------------
+        # 1) context key 생성
+        # ----------------------------------------
+        
+        context_key = make_context_key(user_context)
+
+        # ----------------------------------------
+        # 2) 해당 컨텍스트의 weight 로드
+        # ----------------------------------------
+        params = load_params_for_context(context_key)
+
+        # params = {"w1":..., "w2":..., "distance_bias":...}
+
+        # numpy 변환
+        weight = np.array([
+            params["w1"],
+            params["w2"],
+            params["w3"],
+            params["w4"],
+            params["w5"]
+        ])
+
+        distanceBias = params["distance_bias"]
         
         max_tendency_len = 9
         if version == 3:

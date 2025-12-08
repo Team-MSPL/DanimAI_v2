@@ -11,15 +11,66 @@ result_eval만 가지고 BO/RL을 돌림
 BO는 단순히 “이 result_eval이면 가중치가 얼만큼 좋아야 한다”를 학습
 BO가 출력한 params는 다음 API 호출에서 사용하는 weight로 주입
 
-build_constants_from_params는 실제 코스 생성 단계에서 기존 constant 대신 호출
-
 """
 
 
 from .agent_bo import BOAgent
 from .reward import reward_fn
 from .rl_runner import CourseRL
-from .constant_template import save_params
+from .param_storage import load_context_params, save_context_params
+
+RESULT_NUM = 7
+STORE_PATH = "./best_params.json"
+
+# -------------------------------
+# 범주화(Binning) 함수
+# -------------------------------
+def bin_sensitivity(value):
+    if value is None:
+        return "none"
+    if value <= 3:
+        return "LOW"
+    if value <= 6:
+        return "MID"
+    return "HIGH"
+def n_day_sensitivity(value):
+    if value is None:
+        return "none"
+    if value <= 2:
+        return "SHORT"
+    if value <= 5:
+        return "MID"
+    return "LONG"
+
+# -------------------------------
+# 키 생성: region + DIS_BIN + POP_BIN + n_day
+# -------------------------------
+def make_context_key(user_context):
+    region = "_".join(user_context.get("region", [])) if isinstance(user_context.get("region"), list) else user_context.get("region", "none")
+    
+    dist = bin_sensitivity(user_context.get("distance_sensitivity"))
+    pop  = bin_sensitivity(user_context.get("popular_sensitivity"))
+    nday = n_day_sensitivity(user_context.get("n_day", "none"))
+
+    return f"{region}_{dist}_{pop}_{nday}"
+
+
+def safe_reward_fn(result_eval, user_context):
+    # 필수 key 없으면 reward=0 반환
+    required = ["place_score_avg_list", "geo_score_list", "diversity_score", "popular_scores_list"]
+    for k in required:
+        if k not in result_eval or result_eval[k] is None:
+            return 0
+
+    try:
+        reward = reward_fn(result_eval, user_context)
+        if np.isnan(reward) or reward is None:
+            return 0
+        return reward
+    except:
+        return 0
+
+
 
 #def optimize_weights():
 def optimize_weights(result_eval, user_context):
@@ -42,46 +93,43 @@ def optimize_weights(result_eval, user_context):
         })
 
     """
+    # (1) result_eval 체크
+    if not result_eval:
+        print("[WARN] empty result_eval → skip")
+        return None
 
-    # ----------- 예외 처리 -----------
-    if not result_eval or not result_eval['place_score_avg_list'] or len(result_eval['place_score_avg_list']) == 0:
-        print("[WARN] result_eval is empty. Skipping optimization...")
+    # (2) key 생성
+    key = make_context_key(user_context)
 
-        # 디폴트 파라미터 반환
-        default_params = {
-            "w1": 100, "w2": 200, "w3": 200, "w4": 200, "w5": 25,
-            "distance_bias": 10000
-        }
+    # (3) 저장된 best 가져오기
+    stored = load_context_params(key)
+    if stored:
+        best_reward = stored["best_reward"]
+        best_params = stored["params"]
+    else:
+        best_reward = float("-inf")
+        best_params = None
 
-        return default_params
-    # ---------------------------------
-
-    # 탐색 범위 정의
-    dimensions = [
-        (0, 200),     # w1
-        (0, 300),     # w2
-        (0, 300),     # w3
-        (0, 300),     # w4
-        (0, 50),      # w5
-        (1000, 20000) # distance_bias
-    ]
-
+    # (4) BO + RL 실행
+    dimensions = [...]
     agent = BOAgent(dimensions)
-
-    rl = CourseRL(reward_fn)
+    rl = CourseRL(safe_reward_fn)
 
     history = rl.run(agent, result_eval, user_context, episodes=40)
 
-    # 최적 결과 보고 (BOOptimizer 내부 값 확인)
-    best = agent.best()
+    # 새 best 찾기
+    new_best = agent.best()
+    if not new_best:
+        return best_params  # fallback
 
-    print("\n=== BEST RESULT ===")
-    print(history)
-    print(best)
-    best_params = best["params"]
-    
-    # 사용자 조건별로 저장
-    save_params(best_params, user_context)
+    new_reward = new_best["reward"]
+    new_params = new_best["params"]
 
-    return best_params
-
+    # (5) 비교 후 저장 여부 결정
+    if new_reward > best_reward:
+        print("🎉 Improved weights → save")
+        save_context_params(key, new_params, new_reward)
+        return new_params
+    else:
+        print("😐 No improvement → keep previous")
+        return best_params
