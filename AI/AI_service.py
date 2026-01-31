@@ -27,40 +27,48 @@ async def request_handler(place_list, place_feature_matrix, accomodation_list, s
             if select_item == 0:
                 # select_item 값을 바꾼다고 select_list 내의 값이 바뀌지는 않음 / 밖에서는 선언되지 않은 값이기에
                 select_list[idx][idx2] = -1
-    
-    if version == 3:
-        if len(select_list[0]) != 7:
-            logger.error(select_list)
-        if len(select_list[1]) != 6:
-            logger.error(select_list)
-        if len(select_list[2]) != 6:
-            logger.error(select_list)
-        if len(select_list[3]) != 11:
-            logger.error(select_list)
-        if len(select_list[4]) != 4:
-            logger.error(select_list)
-        # 최대 길이 9 -> 11로 변경
+    try:
+        if version == 3:
+            # if len(select_list[0]) != 7:
+            #     logger.error(select_list)
+            # if len(select_list[1]) != 6:
+            #     logger.error(select_list)
+            # if len(select_list[2]) != 6:
+            #     logger.error(select_list)
+            # if len(select_list[3]) != 11:
+            #     logger.error(select_list)
+            # if len(select_list[4]) != 4:
+            #     logger.error(select_list)
+            # 최대 길이 9 -> 11로 변경
+            theme_matrix = np.array([
+                select_list[0] + [0, 0, 0, 0],
+                select_list[1] + [0, 0, 0, 0, 0],
+                select_list[2] + [0, 0, 0, 0, 0],
+                select_list[3],
+                select_list[4] + [0, 0, 0, 0, 0, 0, 0]
+            ], dtype=int)
+        else:
+            theme_matrix = np.array([
+                select_list[0] + [0, 0],
+                select_list[1] + [0, 0, 0],
+                select_list[2],
+                select_list[3] + [0],
+                select_list[4] + [0, 0, 0, 0, 0]
+            ], dtype=int)
+    except Exception as e:
+        #logger.error(f"웹에서 하면 에러남!!theme_matrix build failed")
+        TARGET_DIM = 11
         theme_matrix = np.array([
-            select_list[0] + [0, 0, 0, 0],
-            select_list[1] + [0, 0, 0, 0, 0],
-            select_list[2] + [0, 0, 0, 0, 0],
-            select_list[3],
-            select_list[4] + [0, 0, 0, 0, 0, 0, 0]
-        ], dtype=int)
-    else:
-        theme_matrix = np.array([
-            select_list[0] + [0, 0],
-            select_list[1] + [0, 0, 0],
-            select_list[2],
-            select_list[3] + [0],
-            select_list[4] + [0, 0, 0, 0, 0]
+            (v + [0] * (TARGET_DIM - len(v)))[:TARGET_DIM]
+            for v in select_list
         ], dtype=int)
 
     # 선작업, Firebase 데이터 수집 + place 객체들 데이터 전처리
     place_list, place_feature_matrix, essential_place_list, accomodation_list = preprocess(place_list, essential_place_list, accomodation_list, place_feature_matrix, version)
     
     # route search 메인 부분 - 그리디, 힐클라이밍, 스코어링
-    result, enough_place, result_eval = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, user_context, version)
+    #result, enough_place, result_eval = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, user_context, version)
+    result, enough_place, result_eval = route_search_main(place_list, place_feature_matrix, accomodation_list, theme_matrix, essential_place_list, time_limit_array, n_day, distance_sensitivity, transit, bandwidth, popular_sensitivity, version)
 
     # 평균 점수 + 점수 보정 + 등수 계산         
     best_point_list = tendencyCalculate(result, select_list_copy, version)
@@ -108,7 +116,8 @@ async def recommend_handler(place_list, place_feature_matrix, select_list, trans
     activatedThemeNum = np.count_nonzero(selectedThemeNum_list)
 
     # 1-1. 전체 점수 계산
-    place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, user_context, version)
+    #place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, user_context, version)
+    place_score_matrix, distance_bias_matrix = get_place_score_list(place_feature_matrix, theme_matrix, selectedThemeNum_list, activatedThemeNum, place_list, popular_sensitivity, version)
     
     dist_coef = CAR_COEFF if transit == 0 else PUBLIC_COEFF
     

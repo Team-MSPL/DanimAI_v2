@@ -12,7 +12,7 @@ from .firebase.firebaseAccess import FirebaseAccess
 from concurrent.futures import ProcessPoolExecutor
 from .logging_config import logger
 from .remake_tendency import remakeTendency
-from .ai.BO.optimize_weights import optimize_weights
+#from .ai.BO.optimize_weights import optimize_weights
 
 # 숙소 및 필수여행지 input값을 추가하고자 할 때 여기 수정
 class AccomodationListItem(BaseModel):
@@ -125,16 +125,36 @@ async def ai_run(aiModel : AIModel):
     bandwidth = aiModel.bandwidth
     version = aiModel.version
     
+    version = 3
+    
     # 어차피 프론트엔드에서 새로운 배열로 줄 것임
     # if version == 3:
     #     select_list = remakeTendency(select_list)
     
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
     logger.info(f"version - {version}")
-    if region_list == ['제주 전체']:
+    
+    
+    def clean_region_text(region: str) -> str:
+        # 해외 prefix 중복 제거
+        while region.count("해외/") > 1:
+            region = "해외/" + region.split("해외/")[-1]
+        return region.strip()
+
+
+    region_list = [clean_region_text(r) for r in region_list]
+
+    if any('제주 전체' in r for r in region_list):
         region_list = ['제주 제주시', '제주 서귀포시']
-    elif region_list == ['서울 전체']:
-        region_list = ['서울 도심권', '서울 서북권', '서울 서남권', '서울 동북권', '서울 동남권']
+
+    elif any('서울 전체' in r for r in region_list):
+        region_list = [
+            '서울 도심권',
+            '서울 서북권',
+            '서울 서남권',
+            '서울 동북권',
+            '서울 동남권'
+        ]
 
     logger.info(f"API 호출 지역 - {region_list}")
 
@@ -151,7 +171,6 @@ async def ai_run(aiModel : AIModel):
         "n_day": n_day,
         "transit": transit,
         "bandwidth": bandwidth,
-        "enough_place": enough_place,
     })      
     
     # # blocking I/O 작업을 실행
@@ -171,31 +190,31 @@ async def ai_run(aiModel : AIModel):
                 "message": '코스 제작 중 에러 발생'
         }
         
-    try:
-        from filelock import FileLock
-        import json     
+    # try:
+    #     from filelock import FileLock
+    #     import json     
         
-        # 강화학습
-        best_params = optimize_weights(result_eval, user_context)
-        logger.info("best_params")
-        logger.info(best_params)
+    #     # 강화학습
+    #     best_params = optimize_weights(result_eval, user_context)
+    #     logger.info("best_params")
+    #     logger.info(best_params)
         
         
-        # 객체 합치기
-        result_eval = result_eval | user_context
+    #     # 객체 합치기
+    #     result_eval = result_eval | user_context
 
-        def save_result_eval(result_eval, filepath="result_eval.json"):
-            lock_path = filepath + ".lock"
-            with FileLock(lock_path):
-                with open(filepath, "a", encoding="utf-8") as f:
-                    json.dump(result_eval, f, ensure_ascii=False)
-                    f.write("\n")
+    #     def save_result_eval(result_eval, filepath="result_eval.json"):
+    #         lock_path = filepath + ".lock"
+    #         with FileLock(lock_path):
+    #             with open(filepath, "a", encoding="utf-8") as f:
+    #                 json.dump(result_eval, f, ensure_ascii=False)
+    #                 f.write("\n")
                     
-        save_result_eval(result_eval, filepath="/home/ubuntu/result_eval.json")
+    #     save_result_eval(result_eval, filepath="/home/ubuntu/result_eval.json")
         
-    except Exception as e:
-        logger.error("평가 함수 저장 중 에러 발생")
-        logger.error(e)
+    # except Exception as e:
+    #     logger.error("평가 함수 저장 중 에러 발생")
+    #     logger.error(e)
     
     return {
         "resultData" : resultData,

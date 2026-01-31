@@ -42,6 +42,7 @@ class FirebaseAccess():
         place_feature = []
         idx = 0
         for r_index, r in enumerate(region):
+            placeName = ""
             try:
                 # "관광지 목록" 문서는 제외
                 place_snapshot = db.collection(r).where(filter=FieldFilter("name", "!=", '관광지목록')).get()
@@ -50,6 +51,8 @@ class FirebaseAccess():
                 for _, place in enumerate(place_snapshot):
                     # data.append(place.to_dict())
                     data = place.to_dict()
+                    
+                    placeName = data["name"]
 
                     #반려견과 선택시 placeList에서 먼저 제거 - 240123
                     if select_list[0][6] == 1 and data["partner"][6] == 0:
@@ -128,7 +131,7 @@ class FirebaseAccess():
                     else:
                         place_feature = np.append(place_feature, feature, axis=0)    # Deep Copy가 된다는 사실 확인하였음
             except Exception as error:
-                logger.error(f"관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:, {error}")
+                logger.error(f"관광지 데이터셋을 읽어오는 중에 오류가 발생했습니다:{placeName}, {error}")
                 continue  # 다음 관광지 계속 진행
 
         return all_place_map, place_feature
