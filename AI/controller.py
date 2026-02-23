@@ -4,6 +4,7 @@ from fastapi import Response
 from pydantic import BaseModel
 import time
 import os
+import re
 #import traceback
 import asyncio
 from dotenv import load_dotenv
@@ -134,13 +135,18 @@ async def ai_run(aiModel : AIModel):
     # FirebaseAccess.read_all_place가 동기적이면 비동기로 변경해야 함
     logger.info(f"version - {version}")
     
-    
+
     def clean_region_text(region: str) -> str:
+        region = region.strip()
+
         # 해외 prefix 중복 제거
         while region.count("해외/") > 1:
             region = "해외/" + region.split("해외/")[-1]
-        return region.strip()
 
+        # 같은 단어 반복 제거 (서울 서울 서울 → 서울)
+        region = re.sub(r'\b(\w+)( \1\b)+', r'\1', region)
+
+        return region
 
     region_list = [clean_region_text(r) for r in region_list]
 
