@@ -1,14 +1,138 @@
-1. 파베에서 장소 리스트 갖고오기.
-2. 필수여행지랑, 숙소는 장소리스트에서 제외하고, 필수여행지, 숙소도 파베 장소리스트랑 비슷한 형식의 dict자료형으로 변경
-3. 장소리스트 사용자 선택 테마 리스트랑 비교해서 선호도 점수 산출 -> [[점수, 인덱스]] 형테로. 인덱스는 처음 리스트의 인덱스. (나중에 점수만 정렬해서 사용하고 이 인덱스로 장소 특정).
-4. route search함수 실행 - 실행 횟수만큼 (RESULT_NUM) -> nday만큼 route_search_for_one_day 반복
-5. route_search_for_one_day: Path에 먼저 필수여행지, 숙소 넣고, 장소 리스트 선호도 높은 장소부터 시간 제한 체크하며 넣음. -> 힐클라임
-6. tsp로 경로 최적화해서 전체 거리 구함
-7. 힐클라임 하면서 최적화. 랜덤으로 선택해서 바꾸는데 필수여행지 선택되면 다시 랜덤으로 선출-> 반복횟수 제한 걸어둠.
-8. 완료되면 교통 수단에 따라 이동시간으로 시간제한 넘어가면 path에서 pop
+✅ (최신 버전) 강화학습 + 베이지안 최적화 기반 Weight 자동 조정 시스템 설명
 
-fastapi, uvicorn, numpy 설치
+본 시스템은 여행 코스 자체를 학습하는 것이 아니라,
+코스 평가(result_eval) 결과를 기반으로 코스 생성에 사용되는 가중치(weight)를 학습하는 구조이다.
 
-ec2상에서 실행하는 방법
-//univcon은 싱글프로세스이기에, 보통 배포할 때는 gunicorn 사용 / nginx -> 연결 문제
-gunicorn -w 2 -k uvicorn.workers.UvicornWorker AI.controller:app
+코스 생성은 기존 API 로직으로 수행되며,
+학습 알고리즘(RL/BO)은 코스 생성 결과만(result_eval) 입력으로 받아
+다음 API 호출에 사용할 최적의 weight를 업데이트한다.
+
+🔵 1. 전체 작동 흐름
+
+API 호출
+→ 사용자 입력(user_context) → 코스 생성 → result_eval 산출
+
+result_eval을 Reward 함수에 입력
+→ 여행 성향/지역 조건을 반영한 reward 계산
+
+해당 사용자 context를 binning하여 context_key 생성
+(지역 + 거리 성향 bin + 인기 성향 bin + 여행일 수 bin)
+
+그 key에 해당하는 기존 best_params 불러오기
+없으면 default params 사용
+
+BO 또는 RL 알고리즘이 reward를 기반으로 weight 조정
+→ 새로운 params 생성
+
+params_manager를 통해 best_params.json에 저장
+→ context별로 독립된 학습값 누적
+
+다음 API 호출 시
+build_constants_from_params(context_key)가
+저장된 weight를 불러와 코스 생성에 사용
+
+🔵 2. 핵심 개념
+✔ 강화학습(RL: Bandit-style)
+
+각 context_key에 대해 가중치 조정량을 소규모 탐색(perturbation)
+
+reward가 상승하면 그 방향으로 업데이트
+
+실패하면 원래 방향으로 되돌아감(exploit)
+
+✔ 베이지안 최적화(BO-lite)
+
+전체 parameter 공간에서 샘플링 기반 탐색
+
+기존 best_reward보다 좋은 reward가 나오면 params를 교체
+
+지나치게 무작위로 튀지 않도록 Gaussian-like 노이즈 적용
+
+✔ Context Binning
+
+사용자 입력을 그대로 key로 쓰면 학습이 거의 불가능하기 때문에
+민감도·여행일수를 구간화하여 key를 생성.
+
+결과:
+“비슷한 여행 성향 → 같은 bucket → 학습을 재사용 가능”
+
+🔵 3. 저장 구조 (best_params.json)
+
+파일은 “context_key → {params, best_reward}” 구조로 저장된다.
+
+{
+  "서울전체_LOW_HIGH_LONG": {
+    "params": {
+      "w1": 110,
+      "w2": 230,
+      "w3": 190,
+      "w4": 210,
+      "w5": 28,
+      "distance_bias": 12000
+    },
+    "best_reward": 3.82
+  },
+
+  "부산전체_MID_LOW_SHORT": {
+    "params": {
+      "w1": 95,
+      "w2": 210,
+      "w3": 240,
+      "w4": 205,
+      "w5": 23,
+      "distance_bias": 9000
+    },
+    "best_reward": 3.44
+  }
+}
+
+🔵 4. build_constants_from_params 역할
+
+이 함수는 더 이상 '고정된 상수(constant)'를 반환하지 않는다.
+대신:
+
+context_key 기반으로 저장된 params 불러오기
+
+없으면 default_params 사용
+
+params → WEIGHT, DISTANCE_BIAS 계산
+
+API 내부에서 코스 생성에 사용
+
+즉,
+
+“가중치를 동적으로 불러와 실제 코스 생성에 주입하는 엔트리 포인트”
+
+로 변경되었다.
+
+🔵 5. result_eval 기반 학습 방식
+
+BO/RL 알고리즘은 코스 자체가 아니라
+코스의 품질(result_eval)이 어떻게 나오느냐에 따라 params를 조정한다.
+
+예시:
+
+diversity_score가 낮음 → w4(다양성 가중치)가 자동 증가
+
+geo_score가 낮음 → distance_bias 증가
+
+popular_score가 너무 높음 → 인기 중심 bias 감소
+
+장소 점수 평균이 낮음 → w1, w2 강화
+
+즉,
+
+코스 생성 → 평가 → 가중치 보정 → 다음 코스 더 좋아짐
+
+이라는 폐루프(feedback loop)를 구축한다.
+
+🔵 최종 요약 문장 (문서용)
+
+이 시스템은 사용자 맥락(context)에 따라 각각 독립적으로
+베이지안 최적화(BO)와 Bandit 기반 강화학습(RL)을 적용하여
+코스 생성 과정에서 사용되는 가중치(weight)를 자동으로 조정한다.
+
+코스 자체를 학습하는 것이 아니라,
+코스 평가 결과(result_eval)를 기반으로 weight를 최적화하는 구조이며,
+이 최적화된 weight는 다음 API 호출에서 자동 반영되어
+사용자 성향에 더 맞는 코스를 생성할 수 있도록 한다.
