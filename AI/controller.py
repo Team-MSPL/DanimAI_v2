@@ -139,14 +139,21 @@ async def ai_run(aiModel : AIModel):
     def clean_region_text(region: str) -> str:
         region = region.strip()
 
+        # 해외 prefix가 있으면 그 앞은 전부 제거
+        if "해외/" in region:
+            region = region[region.index("해외/"):]
+
         # 해외 prefix 중복 제거
         while region.count("해외/") > 1:
             region = "해외/" + region.split("해외/")[-1]
 
-        # 같은 단어 반복 제거 (서울 서울 서울 → 서울)
-        region = re.sub(r'\b(\w+)( \1\b)+', r'\1', region)
+        # 같은 단어 반복 제거
+        words = []
+        for w in region.split():
+            if not words or words[-1] != w:
+                words.append(w)
 
-        return region
+        return " ".join(words)
 
     region_list = [clean_region_text(r) for r in region_list]
 
